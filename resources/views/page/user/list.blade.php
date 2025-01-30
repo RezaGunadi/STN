@@ -13,7 +13,7 @@
 
                         <a class=" btn btn-primary" style="color: white !inportant;"
                             href="{{ URL::To('/input-product') }}" aria-label="Add a new product">
-                            <div class="pe-2">
+                            <div class="pe-2 d-inline-block">
 
                                 <i class="bi bi-plus-circle"></i>
                             </div>

@@ -290,7 +290,8 @@
     $( function() {
         $( "#start_date" ).datepicker();
       } );
-</script><script>
+</script>
+<script>
     $( function() {
         $( "#end_date" ).datepicker();
       } );

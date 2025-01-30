@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\HistoriesDB;
 use App\Models\ProductDB;
 use App\Models\ProductTypeDB;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -107,6 +108,22 @@ class ProductController extends Controller
         }
         if (array_key_exists('product_name', $data)) {
             $result = $result->where('product_name', 'LIKE', '%' . $data['product_name'] . '%');
+        }
+        if (array_key_exists('input_date', $data)) {
+            if ($data['input_date']!='') {
+                # code...
+                $paramStart = Carbon::parse($data['input_date'] . ' 00:00:00')->format('Y-m-d H:i:s');
+                $paramEnd = Carbon::parse($data['input_date'] . ' 23:59:59')->format('Y-m-d H:i:s');
+                $result = $result->where(
+                    'created_at',
+                    '>=',
+                    $paramStart
+                )->where(
+                    'created_at',
+                    '<=',
+                    $paramEnd
+                );
+            }
         }
         $result = $result->paginate(10);
         return view('page.profile.item_list', ['data' => $result, 'number' => $startFrom, 'title' => 'my item']);

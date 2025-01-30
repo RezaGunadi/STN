@@ -1,4 +1,9 @@
 @extends('layouts.index')
+@push('css')
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+<link rel="stylesheet" href="/resources/demos/style.css">
+
+@endpush
 
 @section('content')
 <div class="container py-5">
@@ -88,9 +93,9 @@
                             <div class="col-md-6">
 
                                 <div class="mb-3">
-                                    <label for="payment_date" class="text-capitalize form-label">payment date</label>
-                                    <input type="text" class="form-control" id="payment_date" name="payment_date"
-                                        aria-describedby="payment_dateHelp">
+                                    <label for="input_date" class="text-capitalize form-label">input date</label>
+                                    <input type="text" class="form-control" id="input_date" name="input_date"
+                                        aria-describedby="input_dateHelp">
                                     {{-- <div id="product_nameHelp" class="form-text">product_name</div> --}}
                                 </div>
                             </div>
@@ -308,4 +313,10 @@
     // });
 </script>
 {{-- filterBtn filterForm --}}
+<script>
+    $( function() {
+        $( "#input_date" ).datepicker();
+      } );
+</script>
+
 @endpush

@@ -13,15 +13,18 @@
 
                         <a class=" btn btn-primary" style="color: white !inportant;"
                             href="{{ URL::To('/input-event') }}" aria-label="Add event">
-                            <i class="bi bi-plus-circle pe-2"></i>
-                            {{ __('Add') }}
+                            <div class="pe-2">
+                            <i class="bi bi-plus-circle"></i>
+
+                            </div>
+                                {{ __('Add') }}
                         </a>
                         <div class=" btn btn-secondary" style="color: white !inportant;" id="filter_btn"
                             aria-label="filterBtn">{{ __('Show Filter') }}
                         </div>
                         <div class=" btn btn-secondary  d-none" style="color: white !inportant;" id="filter_btn_hide"
                             aria-label="filter_btn_hide">
-                            {{-- <i class="bi bi-plus-circle pe-2"></i> --}}
+                            {{-- <i class="bi bi-plus-circle"></i> --}}
                             {{ __('Hide Filter') }}
                         </div>
                     </div>

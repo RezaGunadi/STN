@@ -4,7 +4,7 @@
 <div class="col-md-9 mx-auto py-3">
 
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-6 mt-3">
 
             <div class="card px-5">
                 <div class="col-4 mx-auto">
@@ -57,7 +57,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-6 mt-3">
             <div id="reader"></div>
 
         </div>

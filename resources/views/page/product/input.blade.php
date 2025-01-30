@@ -124,11 +124,11 @@ consumable --}}
                         </div>
                         <div id="info" class="d-none my-3"
                             style="background-color: rgb(244, 177, 190); border-radius: 8px;">
-                            <div class="d-inline-block pb-3">
+                            <div class="d-inline-block pb-1">
 
                                 <i class="bi bi-info-square-fill px-3 py-3"></i>
                             </div>
-                            <div class="d-inline px-3 pt-1" style="font-weight: 600;">
+                            <div class="d-inline pt-1" style="font-weight: 600;">
                                 Kode produk akan di buat otomatis apabila Menambahkan lebih dari 1 produk dalam satu
                                 kali input.
                             </div>

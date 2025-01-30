@@ -152,10 +152,12 @@
     .btn {
       border-radius: 8px;
     }
-    .nav-link{
+
+    .nav-link {
       font-size: 14px !important;
     }
-    .sidebar-heading{
+
+    .sidebar-heading {
       font-size: 16px !important;
     }
   </style>
@@ -450,13 +452,13 @@
                     <use xlink:href="#puzzle" />
                   </svg>
                    --}}
-                   <div class="d-inline-block pe-2 pb-2">
-                     @if ($title == 'integration')
-                     <i class="bi bi-puzzle-fill"></i>
-                     @else
-                     {{-- <i class="bi bi-people"></i> --}}
-                     <i class="bi bi-puzzle"></i>
-                     @endif
+                  <div class="d-inline-block pe-2 pb-2">
+                    @if ($title == 'integration')
+                    <i class="bi bi-puzzle-fill"></i>
+                    @else
+                    {{-- <i class="bi bi-people"></i> --}}
+                    <i class="bi bi-puzzle"></i>
+                    @endif
                   </div>
                   Integrations
                 </a>
@@ -478,9 +480,10 @@
                   style="color: #000; font-weight: 400" @endif style="color: #0b2b2b"
                   class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/reports') }}">
                   <div class="d-inline-block pe-2 pb-2">
-                    <svg class="bi">
+                    {{-- <svg class="bi">
                       <use xlink:href="#graph-up" />
-                    </svg>
+                    </svg> --}}
+                    <i class="bi bi-file-earmark-fill"></i>
                   </div>
                   Reports
                 </a>
@@ -581,9 +584,13 @@
                     style="color: #000; font-weight: 400" @endif style="color: #0b2b2b"
                     class="nav-link d-flex align-items-center gap-2" href="{{ route('logout') }}" onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();">
-                    <svg class="bi">
+                    {{-- <svg class="bi">
                       <use xlink:href="#door-closed" />
-                    </svg>
+                    </svg> --}}
+                    <div class="d-inline-block pe-2 pb-2">
+
+                      <i class="bi bi-box-arrow-left"></i>
+                    </div>
                     Sign out
                   </a>
                 </li>

@@ -16,7 +16,7 @@
     <div class="p-3" style="border-radius: 12px; border-color: black; border-block: initial;border-width: 1px;border-style: solid;">
 
         <div class="row ">
-            <div class="col-md-6">
+            <div class="col-md-6 mt-3">
             <a href="{{ URL::To('/closing-integration') }}">
                     <div style="text-align: center; color: #fff; background-color: #D61212; border-radius: 12px; font-weight: 600; font-size:28px;  " class="card p-3">
         
@@ -30,7 +30,7 @@
                     </div>
                 </a>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 mt-3">
             <a href="{{ URL::To('/integration') }}">
                     <div style="text-align: center; color: #fff; background-color: #D61212; border-radius: 12px; font-weight: 600; font-size:28px;  " class="card p-3">
         

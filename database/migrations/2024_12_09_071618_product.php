@@ -27,7 +27,7 @@ class Product extends Migration
             $table->string('purpose_used')->nullable();
             $table->bigInteger('price');
             $table->string('status');
-            $table->text('event_id')->default(0);
+            $table->bigInteger('event_id')->default(0);
             $table->text('storage_location')->nullable();
             $table->integer('is_available')->default(1);
             $table->text('note')->nullable();

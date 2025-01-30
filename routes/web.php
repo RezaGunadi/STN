@@ -27,11 +27,15 @@ Route::get('/qr-scanner', [App\Http\Controllers\HomeController::class, 'qrScanne
 
 
 Route::get('/input-event', [App\Http\Controllers\EventController::class, 'input'])->name('input_event');
+Route::get('/close-event/{id}', [App\Http\Controllers\EventController::class, 'close'])->name('close_event_detail');
+Route::post('/close-event', [App\Http\Controllers\EventController::class, 'submitClose'])->name('close_submit_event');
 Route::get('/edit-event/{id}', [App\Http\Controllers\EventController::class, 'edit'])->name('edit_event');
 Route::get('/detail-event/{id}', [App\Http\Controllers\EventController::class, 'detail'])->name('detail_event');
 Route::get('/list-event', [App\Http\Controllers\EventController::class, 'list'])->name('list_event');
 Route::post('/submit-event', [App\Http\Controllers\EventController::class, 'submit'])->name('submit_event');
 Route::post('/submit-event-edit', [App\Http\Controllers\EventController::class, 'submitEdit'])->name('submit_edit_event');
+
+Route::get('/reports', [App\Http\Controllers\ReportController::class, 'list'])->name('report_list');
 
 Route::get('/input-history', [App\Http\Controllers\HistoryController::class, 'input'])->name('input_history');
 Route::get('/edit-history/{id}', [App\Http\Controllers\HistoryController::class, 'edit'])->name('edit_history');
@@ -51,13 +55,26 @@ Route::get('/edit-user/{id}', [App\Http\Controllers\UserController::class, 'edit
 Route::get('/list-user', [App\Http\Controllers\UserController::class, 'list'])->name('list_user');
 
 Route::get('/integration', [App\Http\Controllers\IntegrationController::class, 'integration'])->name('integration');
+Route::get('/integration-menu', [App\Http\Controllers\IntegrationController::class, 'menu'])->name('integrationMenu');
 Route::post('/input-integration', [App\Http\Controllers\IntegrationController::class, 'input'])->name('input_integration');
+Route::get('/closing-integration', [App\Http\Controllers\IntegrationController::class, 'closeIntegration'])->name('closing_integration');
+Route::post('/close-integration', [App\Http\Controllers\IntegrationController::class, 'close'])->name('close_integration');
 
 
 Route::get('/generate-qr', [App\Http\Controllers\IntegrationController::class, 'generateQr'])->name('generate_qr');
 Route::get('/auto-complete-qr', [App\Http\Controllers\IntegrationController::class, 'autoCompleteQr'])->name('auto_complete_qr');
 Route::get('/auto-complete-user', [App\Http\Controllers\IntegrationController::class, 'autoCompleteUser'])->name('auto_complete_user');
 Route::get('/auto-complete-product', [App\Http\Controllers\IntegrationController::class, 'autoCompleteProduct'])->name('auto_complete_product');
+
+
+Route::get('/my-profile', [App\Http\Controllers\UserController::class, 'myProfile'])->name('myProfile');
+Route::get('/change-password', [App\Http\Controllers\UserController::class, 'changePasswordView'])->name('changePasswordView');
+Route::post('/update-profile', [App\Http\Controllers\UserController::class, 'updateProfile'])->name('updateProfile');
+Route::post('/change-pass', [App\Http\Controllers\UserController::class, 'changePassword'])->name('changePassword');
+Route::get('/reset-pass', [App\Http\Controllers\UserController::class, 'resetPass'])->name('resetPass');
+Route::get('/reset-pass', [App\Http\Controllers\UserController::class, 'emailTest'])->name('emailTest');
+
+Route::get('/my-item', [App\Http\Controllers\ProductController::class, 'myItem'])->name('myItem');
 
 // Route::get('/autocomplete', array('as' => 'autocomplete', 'uses' => 'App\Http\Controllers\SearchController@autocomplete'));
 

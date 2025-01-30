@@ -3,14 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\HistoriesDB;
+use App\Models\JobDetailsDB;
 use App\Models\JobsDB;
 use App\Models\ProductDB;
+use App\Models\ReportDB;
 use App\Models\User;
+use Carbon\Carbon;
+use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redirect;
 use Product;
+use Report;
 
 class EventController extends Controller
 {
@@ -36,6 +43,12 @@ class EventController extends Controller
         $limit = 100;
         $orderBy = 'id';
         $orderPriority = 'desc';
+        // event_name
+        // event_location
+        // starter_user
+        // closer_user
+        // client
+        // date
         if (array_key_exists('start_from', $data)) {
             $startFrom = $data['start_from'];
         }
@@ -59,48 +72,58 @@ class EventController extends Controller
             $result = $result->where('event_location', 'LIKE', '%' . $data['event_location'] . '%');
         }
         if (array_key_exists('starter_user', $data)) {
-            $userIds = User::where('name', 'LIKE', "%$request->starter_user%")->orWhere('email', 'LIKE', "%$request->starter_user%")->orWhere('phone', 'LIKE', "%$request->starter_user%")->get()->toArray();
-            $result = $result->whereIn('starter_user_id', $userIds);
+            if ($data['starter_user'] != '') {
+                $userIds = User::where('name', 'LIKE', "%$request->starter_user%")->orWhere('email', 'LIKE', "%$request->starter_user%")->orWhere('phone', 'LIKE', "%$request->starter_user%")->pluck('id')->toArray();
+                $result = $result->whereIn('starter_user_id', $userIds);
+            }
         }
         if (array_key_exists('closer_user', $data)) {
-            $userIds = User::where('name', 'LIKE', "%$request->closer_user%")->orWhere('email', 'LIKE', "%$request->closer_user%")->orWhere('phone', 'LIKE', "%$request->closer_user%")->get()->toArray();
-            $result = $result->where('closer_user_id', $userIds);
+            if ($data['closer_user'] != '') {
+                $userIds = User::where('name', 'LIKE', "%$request->closer_user%")->orWhere('email', 'LIKE', "%$request->closer_user%")->orWhere('phone', 'LIKE', "%$request->closer_user%")->pluck('id')->toArray();
+                $result = $result->where('closer_user_id', $userIds);
+            }
         }
         if (array_key_exists('client', $data)) {
             $result = $result->where('client', 'LIKE', '%' . $data['client'] . '%');
         }
-        if (array_key_exists('date', $data)) {
-            $result = $result->where(
-                'start_date',
-                '<=',
-                date("Y-m-d", strtotime($data['date']))
-            );
-            $result = $result->where(
-                'finish_date',
-                '>=',
-                date("Y-m-d", strtotime($data['date']))
-            );
+        if (array_key_exists('status', $data)) {
+            if ($data['status'] != null) {
+                if ($data['status'] != '' && $data['status']!='all') {
+                    if ($data['status'] == 'pending') {
+                        $result = $result->whereNull('finish_date');
+                    } else {
+                        if ($data['status'] == 'finish') {
+                            $result = $result->whereNotNull('finish_date');
+                        }
+                    }
+                }
+            }
+        }
+        if (array_key_exists('status', $data)) {
+            $result = $result->where('client', 'LIKE', '%' . $data['client'] . '%');
         }
         if (array_key_exists('start_date', $data)) {
-            $result = $result->where('start_date', 'LIKE', '%' . $data['start_date'] . '%');
+            // dd($paramStart);
+            if ($data['start_date'] != '') {
+                $paramStart = Carbon::parse($data['start_date'] . ' 00:00:00')->format('Y-m-d H:i:s') ;
+                $result = $result->where(
+                    'start_date',
+                    '>=',
+                    $paramStart
+                );
+            }
         }
-        if (array_key_exists('finish_date', $data)) {
-            $result = $result->where('finish_date', 'LIKE', '%' . $data['finish_date'] . '%');
+        if (array_key_exists('end_date', $data)) {
+            if ($data['end_date'] != '') {
+                $paramEnd = Carbon::parse($data['end_date'] . ' 23:59:59')->format('Y-m-d H:i:s');
+                $result = $result->where(
+                    'finish_date',
+                    '<=',
+                    $paramEnd
+                );
+            }
         }
-        if (array_key_exists('lat', $data)) {
-            $result = $result->where('lat', 'LIKE', '%' . $data['lat'] . '%');
-        }
-        if (array_key_exists('lng', $data)) {
-            $result = $result->where('lng', 'LIKE', '%' . $data['lng'] . '%');
-        }
-        if (array_key_exists('starter_user_id', $data)) {
-            $result = $result->where('starter_user_id', 'LIKE', '%' . $data['starter_user_id'] . '%');
-        }
-        if (array_key_exists('closer_user_id', $data)) {
-            $result = $result->where('closer_user_id', 'LIKE', '%' . $data['closer_user_id'] . '%');
-        }
-
-        $result = $result->paginate(5);
+        $result = $result->paginate(10);
         // $result = $result->get();
         return view('page.event.list', ['data' => $result, 'number' => $startFrom, 'title' => 'event']);
     }
@@ -108,16 +131,23 @@ class EventController extends Controller
     public function submit(Request $request)
     {
         $data = $request->all();
-        $itemId = array_values($request->item_id);
+        if ($request->has('item_id')) {
+            if (count($request->item_id) > 0) {
+                # code...
+                $itemId = array_values($request->item_id);
+            }
+        }
         $ip = request()->ip();
         $ip = '72.14.201.145';           // something like 127.0.0.1
         $url = "http://ip-api.com/json/" . $ip;    // http://ip-api.com/127.0.0.1
         $ipResult = Http::get($url);
         $data['ip'] = json_decode($ipResult->body());
         $data['lat'] = $data['ip']->city;
+        $isEdit = false;;
         if ($request->has('event_id')) {
             if ($request->event_id != 0) {
-                $job = JobsDB::where('id')->first();
+                $isEdit = true;
+                $job = JobsDB::where('id', $request->event_id)->first();
                 $additionalData = clone $job;
                 $additionalData = $additionalData->toArray();
 
@@ -128,49 +158,153 @@ class EventController extends Controller
                 $new = '';
                 $column = '';
                 $parameter = [
-                    'id'=>$job['id'],
-                    'event_name'=>$job['event_name'],
-                    'event_location'=>$job['event_location'],
-                    'lat'=>$job['lat'],
-                    'lng'=>$job['lng'],
-                    'starter_user_id'=>$job['starter_user_id'],
-                    'closer_user_id'=>$job['closer_user_id'],
-                    'user_city'=>$job['user_city'],
-                    'user_province'=>$job['user_province'],
-                    'user_address'=>$job['user_address'],
-                    'client'=>$job['client'],
-                    'start_date'=>$job['start_date'],
-                    'finish_date'=>$job['finish_date'],
+                    'id' => $additionalData['id'],
+                    'event_name' => $additionalData['event_name'],
+                    'event_location' => $additionalData['event_location'],
+                    'client' => $additionalData['client'],
+                    'lat' => $additionalData['lat'],
+                    'lng' => $additionalData['lng'],
+                    'starter_user_id' => $additionalData['starter_user_id'],
+                    'closer_user_id' => $additionalData['closer_user_id'],
+                    'user_city' => $additionalData['user_city'],
+                    'user_province' => $additionalData['user_province'],
+                    'user_address' => $additionalData['user_address'],
+                    'start_date' => $additionalData['start_date'],
+                    'finish_date' => $additionalData['finish_date'],
                 ];
 
-                $column = '';
-                $old = '';
-                $new = '';
-                $history->input($additionalData['id'], 'event', 'update', $old, $new, $column, $parameter);
+                if ($additionalData['event_name'] != $data['event_name']) {
+                    $column = 'nama event';
+                    $old = $additionalData['event_name'];
+                    $new = $data['event_name'];
+                    $history->input($additionalData['id'], 'event', 'update', $old, $new, $column, $parameter);
+                }
+                if ($additionalData['event_location'] != $data['event_location']) {
+                    $column = 'lokasi event';
+                    $old = $additionalData['event_location'];
+                    $new = $data['event_location'];
+                    $history->input($additionalData['id'], 'event', 'update', $old, $new, $column, $parameter);
+                }
+                if ($additionalData['client'] != $data['client']) {
+                    $column = 'nama client';
+                    $old = $additionalData['client'];
+                    $new = $data['client'];
+                    $history->input($additionalData['id'], 'event', 'update', $old, $new, $column, $parameter);
+                }
+
+                // $jobs = JobDetailsDB::where('id', $request->event_id)->get();
+                // foreach ($jobs as $job) {
+                //     $additionalData = clone $job;
+                //     $additionalData = $additionalData->toArray();
+
+
+
+                //     $history = new HistoriesDB();
+                //     $old = '';
+                //     $new = '';
+                //     $column = '';
+                //     $parameter = [
+                //         'id' => $additionalData['id'],
+                //         'job_detail_id' => $additionalData['id'],
+                //         'id_product' => $additionalData['id_product'],
+                //         'lat_user' => $additionalData['lat_user'],
+                //         'lng_user' => $additionalData['lng_user'],
+                //         'event_id' => $additionalData['event_id'],
+                //         'created_by' => $additionalData['created_by'],
+                //         'updated_by' => $additionalData['updated_by'],
+                //         'deleted_by' => $additionalData['deleted_by'],
+                //     ];
+
+                //         $column = '';
+                //         $old = '';
+                //         $new = '';
+                //         $history->input($additionalData['id'], 'event_detail', 'update', $old, $new, $column, $parameter);
+                //         # code...
+                // }
             } else {
                 $job = new JobsDB();
+                $checkEvent = JobsDB::where('event_name',$data['event_name'])->first();
+                return Redirect::back()->with('error', 'Nama event tidak boleh sama');
             }
         } else {
             $job = new JobsDB();
+            $checkEvent = JobsDB::where('event_name',$data['event_name'])->first();
+            if ($checkEvent) {
+                return Redirect::back()->with('error', 'Nama event tidak boleh sama');
+            }
         }
+
         $job->event_name = $data['event_name'];
         $job->event_location = $data['event_location'];
         $job->lat = $data['ip']->lat;
         $job->lng = $data['ip']->lon;
-        $job->starter_user_id = $data[''];
-        // $job->closer_user_id= $data[''];
+        $job->starter_user_id = Auth::user()->id;
+        $job->created_by = Auth::user()->id;
         $job->user_city = $data['ip']->city;
         $job->user_province = $data['ip']->regionName;
         $job->user_address = $data['ip']->city . ' ' . $data['ip']->regionName . ', ' . $data['ip']->country;
         $job->client = $data['client'];
-        $job->start_date = now();
+        if ($isEdit) {
+            # code...
+            $job->start_date = now();
+            $job->closer_user_id = 0;
+            $job->deleted_by = 0;
+            $job->updated_by
+                =
+                Auth::user()->id;
+        }
         // $job->finish_date= $request->;
         $job->save();
+        if ($request->has('item_id')) {
+            # code...
+            foreach ($request->item_id as $value) {
+                # code...
+                $checkJob = JobDetailsDB::where('id_product', $value)->where('event_id', $job->id)->first();
+                if (!$checkJob) {
+                    # code...
+                    $jobDetail = new JobDetailsDB();
+                    $jobDetail->id_product = $value;
+                    $jobDetail->lat_user = $data['ip']->lat;
+                    $jobDetail->lng_user = $data['ip']->lon;
+                    $jobDetail->event_id
+                        = $job->id;
+                    $jobDetail->created_by = Auth::user()->id;
+                    $jobDetail->deleted_by = 0;
+                    $jobDetail->updated_by = Auth::user()->id;
+                    $jobDetail->save();
+                    $product = ProductDB::where('id', $value)->first();
+                    $product->event_id = $job->id;
+                    $product->save();
 
-        if ($request->has('event_id')) {
-            if ($request->event_id != 0) {
-            
-            }}
+                    $additionalData = clone $jobDetail;
+                    $additionalData = $additionalData->toArray();
+
+
+
+                    $history = new HistoriesDB();
+                    $old = '';
+                    $new = '';
+                    $column = '';
+                    $parameter = [
+                        'id' => $additionalData['id'],
+                        'job_detail_id' => $additionalData['id'],
+                        'id_product' => $additionalData['id_product'],
+                        'lat_user' => $additionalData['lat_user'],
+                        'lng_user' => $additionalData['lng_user'],
+                        'event_id' => $additionalData['event_id'],
+                        'created_by' => $additionalData['created_by'],
+                        'updated_by' => $additionalData['updated_by'],
+                        'deleted_by' => $additionalData['deleted_by'],
+                    ];
+
+                    $column = '';
+                    $old = '';
+                    $new = '';
+                    $history->input($additionalData['id'], 'event_detail', 'update', $old, $new, $column, $parameter);
+                }
+            }
+        }
+
 
         //   "_token" => "bGiRinOMzdhPn77BWyk6e4CuVpoKSfPb9mw69Psd"
         //   "event_name" => "Fun"
@@ -197,19 +331,204 @@ class EventController extends Controller
         //   }
         //   "lat" => "Jakarta"
 
-        dd($data);
-        return redirect(URL::To('/list-event'));
+        // dd($data);
+        return redirect(URL::To('/list-event'))->with('success', $isEdit ? 'Berhasil mengubah event' : 'Berhasil menambahkan event');
+    }
+    public function submitClose(Request $request)
+    {
+        $data = $request->all();
+        $itemId = array_values($request->item_id);
+        $ip = request()->ip();
+        $ip = '72.14.201.145';           // something like 127.0.0.1
+        $url = "http://ip-api.com/json/" . $ip;    // http://ip-api.com/127.0.0.1
+        $ipResult = Http::get($url);
+        $data['ip'] = json_decode($ipResult->body());
+        $data['lat'] = $data['ip']->city;
+        // dd($data);
+        $product_ids = [];
+        if ($request->has('item_id')) {
+            foreach ($request->item_id as $key => $value) {
+                array_push($product_ids, $key);
+            }
+        }
+        if ($request->has('event_id')) {
+            if ($request->event_id != 0) {
+                $job = JobsDB::where('id', $request->event_id)->first();
+                // $additionalData = clone $job;
+                // $additionalData = $additionalData->toArray();
+
+
+
+                // $history = new HistoriesDB();
+                // $old = '';
+                // $new = '';
+                // $column = '';
+                // $parameter = [
+                //     'id' => $job['id'],
+                //     'event_name' => $job['event_name'],
+                //     'event_location' => $job['event_location'],
+                //     'lat' => $job['lat'],
+                //     'lng' => $job['lng'],
+                //     'starter_user_id' => $job['starter_user_id'],
+                //     'closer_user_id' => Auth::user()->id,
+                //     'user_city' => $job['user_city'],
+                //     'user_province' => $job['user_province'],
+                //     'user_address' => $job['user_address'],
+                //     'client' => $job['client'],
+                //     'start_date' => $job['start_date'],
+                //     'finish_date' => $job['finish_date'],
+                // ];
+
+
+                // $column = '';
+                // $old = '';
+                // $new = '';
+                // $history->input($additionalData['id'], 'event', 'update', $old, $new, $column, $parameter);
+
+                // $jobs = JobDetailsDB::where('event_id', $request->event_id)->get();
+                // foreach ($jobs as $job) {
+                //     $additionalData = clone $job;
+                //     $additionalData = $additionalData->toArray();
+
+
+
+                //     $history = new HistoriesDB();
+                //     $old = '';
+                //     $new = '';
+                //     $column = '';
+                //     $parameter = [
+                //         'job_detail_id' => $job['job_detail_id'],
+                //         'id_product' => $job['id_product'],
+                //         'lat_user' => $job['lat_user'],
+                //         'lng_user' => $job['lng_user'],
+                //         'event_id' => $job['event_id'],
+                //         'created_by' => $job['created_by'],
+                //         'updated_by' => Auth::user()->id,
+                //         'deleted_by' => $job['deleted_by'],
+                //     ];
+
+                //     $column = '';
+                //     $old = '';
+                //     $new = '';
+                //     $history->input($additionalData['id'], 'event_detail', 'update', $old, $new, $column, $parameter);
+                // }
+            } else {
+                $job = new JobsDB();
+            }
+        } else {
+            $job = new JobsDB();
+        }
+        $job->closer_user_id = Auth::user()->id;
+        // $job->closer_user_id = 0;
+        // $job->deleted_by = 0;
+        $job->updated_by =
+            Auth::user()->id;
+        // $job->start_date = now();
+        $job->finish_date = now();
+        $job->save();
+        if ($request->has('item_id')) {
+            # code...
+            foreach ($request->item_id as $key => $value) {
+                # code...
+                $checkJob = JobDetailsDB::where('id_product', $key)->where('event_id', $job->id)->first();
+                if ($checkJob) {
+                    if ($value == 'ada') {
+                        # code...
+                        $checkJob->updated_by = Auth::user()->id;
+                        $checkJob->save();
+                        $date1 = new DateTime($checkJob->created_at);
+                        $date2 = new DateTime($checkJob->updated_at);
+                        $interval = $date1->diff($date2);
+                        $checkJob->day_finished =
+                            $interval->days + 1;
+                        $checkJob->save();
+                        $product = ProductDB::where('id', $key)->first();
+                        $product->event_id = 0;
+                        $product->user_id =
+                            Auth::user()->id;
+                        $product->save();
+                    } else {
+                        if ($value == 'return') {
+                            $checkJob->updated_by = Auth::user()->id;
+                            $checkJob->save();
+                            $date1 = new DateTime($checkJob->created_at);
+                            $date2 = new DateTime($checkJob->updated_at);
+                            $interval = $date1->diff($date2);
+                            $checkJob->day_finished =
+                                $interval->days + 1;
+                            $checkJob->save();
+                            $product = ProductDB::where('id', $key)->first();
+                            $product->event_id = 0;
+                            $product->save();
+                        } else {
+                            Log::info('Rport barang hilang');
+                            $checkJob->updated_by = Auth::user()->id;
+                            $checkJob->save();
+                            $date1 = new DateTime($checkJob->created_at);
+                            $date2 = new DateTime($checkJob->updated_at);
+                            $interval = $date1->diff($date2);
+                            $checkJob->day_finished =
+                                $interval->days + 1;
+                            $checkJob->save();
+
+                            $product = ProductDB::where('id', $key)->first();
+                            if ($product->is_consumable == 0) {
+                                # code...
+                                $report = new ReportDB();
+                                $report->item_id = $key;
+                                $report->price = $product->price;
+                                $report->note = 'Hilang pada event ' . $job->event_name . ' pada ' . now() . '. di konfirmasi oleh ' . Auth::user()->name;
+                                $report->reporter_id =
+                                    Auth::user()->id;
+                                $report->user_id = $checkJob->created_by;
+                                $report->deleted_by = 0;
+                                $report->updated_by = 0;
+                                $report->created_by =
+                                    Auth::user()->id;
+                                $report->delete_reason = '';
+                                $report->save();
+                                $user = User::where('id', $checkJob->created_by)->first();
+                                $user->total_kerugian = $user->total_kerugian + $product->price;
+                                $product->status= 'Lost';
+                                $product->save();
+                                $user->save();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return redirect(URL::To('/list-event'))->with('success', 'Berhasil menutup event');
     }
     public function input()
 
     {
-        $data = ProductDB::where('user_id', Auth::user()->id)->whereNull('event_location')->get();
+        $data = ProductDB::where('user_id', Auth::user()->id)->where('event_id', 0)->get();
         return view('page.event.input', ['data' => $data, 'title' => 'event', 'event' => null]);
+    }
+    public function close($id)
+
+    {
+        $event = JobsDB::where('id', $id)->first();
+        $product = ProductDB::where('event_id', $id)
+            ->get();
+        return view('page.event.close', ['data' => $product, 'title' => 'event', 'event' => $event]);
     }
     public function edit($id)
     {
-        $product = JobsDB::where('id', $id)->first();
-        return view('page.event.edit', ['data' => $product, 'title' => 'event', 'event' => null]);
+        $event = JobsDB::where('id', $id)->first();
+        $product = ProductDB::where('user_id', Auth::user()->id)->where(function ($q) use ($id) {
+            $q = $q->where('event_id', $id)->orWhere('event_id', 0);
+        })
+            ->get();
+        return view('page.event.edit', ['data' => $product, 'title' => 'event', 'event' => $event]);
+    }
+    public function detail($id)
+    {
+        $event = JobsDB::where('id', $id)->first();
+        $product = ProductDB::where('event_id', $id)->get();
+        return view('page.event.detail', ['data' => $product, 'title' => 'event', 'event' => $event]);
     }
 
     public function submitEdit(Request $request)
@@ -543,6 +862,6 @@ class EventController extends Controller
         $oldData->delete();
 
 
-        return redirect(URL::To('/list-product'));
+        return redirect(URL::To('/list-product'))->with('success', 'Berhasil mengubah data event');
     }
 }

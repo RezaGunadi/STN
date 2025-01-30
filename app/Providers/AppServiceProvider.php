@@ -25,8 +25,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         //
+        date_default_timezone_set('Asia/Jakarta');
         Paginator::defaultView('vendor.pagination.bootstrap-4');
 
-        Paginator::defaultSimpleView('your-pagination-view-name');
+        Paginator::defaultSimpleView('vendor.pagination.bootstrap-4');
     }
 }

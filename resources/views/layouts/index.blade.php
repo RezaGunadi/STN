@@ -17,7 +17,7 @@
 
   <!-- Fonts -->
   <link rel="dns-prefetch" href="//fonts.gstatic.com">
-  <link rel="shortcut icon" href="assets/img/stn_long.png" type="image/x-icon">
+  <link rel="shortcut icon" href="{{ URL::To('assets/img/stn_long.png') }}" type="image/x-icon">
   <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet">
 
   <!-- Styles -->
@@ -37,6 +37,11 @@
   {{-- <link href="../assets/dist/css/bootstrap.min.css" rel="stylesheet"> --}}
 
   <style>
+    .btn-primary {
+      background-color: #D61212;
+      border-color: #D61212;
+    }
+
     .bd-placeholder-img {
       font-size: 1.125rem;
       text-anchor: middle;
@@ -142,6 +147,16 @@
       margin-bottom: 16px;
       cursor: pointer;
       caret-color: white;
+    }
+
+    .btn {
+      border-radius: 8px;
+    }
+    .nav-link{
+      font-size: 14px !important;
+    }
+    .sidebar-heading{
+      font-size: 16px !important;
     }
   </style>
 
@@ -286,13 +301,15 @@
     </symbol>
   </svg>
 
-  <header class="navbar sticky-top bg-dark flex-md-nowrap p-0 shadow" data-bs-theme="dark">
+  <header class="navbar sticky-top bg-dark flex-md-nowrap p-0 shadow" style="margin-bottom: 0px" data-bs-theme="dark">
     <div class="row justify-content-between w-100 px-3">
-
+      <audio id="scan" src="{{ URL::To('/assets/sound/scan.mp3') }}"></audio>
       <a class="col navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6 text-white" href="{{ URL::To('/') }}">
 
         {{-- STN Smart System --}}
-        <img src="{{ asset('assets/img/stn_long.png') }}" {{-- class="img-fluid" --}} style="object-fit: cover;position: absolute;height:250%;background-position: center center; top: -75%; background-repeat: no-repeat;" alt="stn smart system">
+        <img src="{{ asset('assets/img/stn_long.png') }}" {{-- class="img-fluid" --}}
+          style="object-fit: cover;position: absolute;height:250%;background-position: center center; top: -75%; background-repeat: no-repeat;"
+          alt="stn smart system">
       </a>
       <div class="col"></div>
       <ul class="col-auto navbar-nav flex-row d-md-none">
@@ -308,9 +325,10 @@
           <button class="px-3 text-white btn btn-dark" type="button" data-bs-toggle="offcanvas"
             data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false"
             aria-label="Toggle navigation">
-            <svg class="bi">
+            <i style="font-size: 16px" class="bi bi-list"></i>
+            {{-- <svg style="font-size: 16px" class="bi">
               <use xlink:href="#list" />
-            </svg>
+            </svg> --}}
           </button>
         </li>
       </ul>
@@ -322,90 +340,124 @@
   </header>
 
   <div class="container-fluid">
+
+    @if (session('error'))
+    <div class="alert alert-danger">
+      {{ session('error') }}
+    </div>
+    @endif
+    @if (\Session::has('success'))
+    <div class="alert alert-success">
+      <ul>
+        <li>{!! \Session::get('success') !!}</li>
+      </ul>
+    </div>
+    @endif
     <div class="row">
       <div class="sidebar border border-right col-md-3 col-lg-2 p-0 bg-body-tertiary">
         <div class="offcanvas-md offcanvas-end bg-body-tertiary" tabindex="-1" id="sidebarMenu"
           aria-labelledby="sidebarMenuLabel">
           <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="sidebarMenuLabel">Company name</h5>
+            <h5 class="offcanvas-title" style="font-size: 18px;" id="sidebarMenuLabel">Sewa TV Nusantara</h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu"
               aria-label="Close"></button>
           </div>
           <div class="offcanvas-body d-md-flex flex-column p-0 pt-lg-3 overflow-y-auto">
+            <h6
+              class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-body-secondary text-uppercase">
+              <span>STN Management</span>
+              {{-- <a class="link-secondary" href="#" aria-label="Add a new report">
+                          <svg class="bi">
+                            <use xlink:href="#plus-circle" />
+                          </svg>
+                        </a> --}}
+            </h6>
             <ul class="nav flex-column">
               <li class="nav-item">
-                <a class="nav-link d-flex align-items-center gap-2 
-                " aria-current="page" href="#">
+                <a @if ($title=='dashboard' ) style="color: #0b2b2b; font-weight: 600" @else
+                  style="color: #000; font-weight: 400" @endif style="color: #0b2b2b" class="nav-link d-flex align-items-center gap-2 
+                " aria-current="page" href="{{ URL::To('/') }}">
                   {{-- <svg class="bi">
                     <use xlink:href="#house-fill" />
                   </svg> --}}
-                  @if ($title == 'dashboard')
-                  <i class="bi bi-house-door-fill"></i>
-                  @else
-                  <i class="bi bi-house-door"></i>
-                  @endif
+                  <div class="d-inline-block pe-2 pb-2">
+
+                    @if ($title == 'dashboard')
+                    <i class="bi bi-house-door-fill"></i>
+                    @else
+                    <i class="bi bi-house-door"></i>
+                    @endif
+                  </div>
                   Dashboard
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/list-event') }}">
+                <a @if ($title=='event' ) style="color: #0b2b2b; font-weight: 600" @else
+                  style="color: #000; font-weight: 400" @endif style="color: #0b2b2b"
+                  class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/list-event') }}">
                   {{-- <svg class="bi">
                     <use xlink:href="#file-earmark" />
                   </svg> --}}
-                  @if ($title == 'event')
-                  <i class="bi bi-calendar2-event-fill"></i>
-                  @else
-                  <i class="bi bi-calendar2-event"></i>
-                  @endif
+                  <div class="d-inline-block pe-2 pb-2">
+                    @if ($title == 'event')
+                    <i class="bi bi-calendar2-event-fill"></i>
+                    @else
+                    <i class="bi bi-calendar2-event"></i>
+                    @endif
+                  </div>
                   Event
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/list-product') }}">
+                <a @if($title=='product' ) style="color: #0b2b2b; font-weight: 600" @else
+                  style="color: #000; font-weight: 400" @endif style="color: #0b2b2b"
+                  class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/list-product') }}">
                   {{-- <svg class="bi">
                     <use xlink:href="#cart" />
                   </svg> --}}
-                  @if ($title == 'product')
-                  <i class="bi bi-cart-fill"></i>
-                  @else
-                  <i class="bi bi-cart"></i>
-                  @endif
+                  <div class="d-inline-block pe-2 pb-2">
+                    @if ($title == 'product')
+                    <i class="bi bi-cart-fill"></i>
+                    @else
+                    <i class="bi bi-cart"></i>
+                    @endif
+                  </div>
                   Products
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/list-user') }}">
+                <a @if ($title=='user' ) style="color: #0b2b2b; font-weight: 600" @else
+                  style="color: #000; font-weight: 400" @endif style="color: #0b2b2b"
+                  class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/list-user') }}">
                   {{-- <svg class="bi">
                     <use xlink:href="#people" />
                   </svg> --}}
-                  @if ($title == 'user')
-                  <i class="bi bi-people-fill"></i>
-                  @else
-                  <i class="bi bi-people"></i>
-                  @endif
+                  <div class="d-inline-block pe-2 pb-2">
+                    @if ($title == 'user')
+                    <i class="bi bi-people-fill"></i>
+                    @else
+                    <i class="bi bi-people"></i>
+                    @endif
+                  </div>
                   User
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link d-flex align-items-center gap-2" href="#">
-                  <svg class="bi">
-                    <use xlink:href="#graph-up" />
-                  </svg>
-                  Reports
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/integration') }}">
+                <a @if ($title=='integration' ) style="color: #0b2b2b; font-weight: 600" @else
+                  style="color: #000; font-weight: 400" @endif style="color: #0b2b2b"
+                  class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/integration-menu') }}">
                   {{-- <svg class="bi">
                     <use xlink:href="#puzzle" />
                   </svg>
                    --}}
-                  @if ($title == 'integration')
-                  <i class="bi bi-puzzle-fill"></i>
-                  @else
-                  {{-- <i class="bi bi-people"></i> --}}
-                  <i class="bi bi-puzzle"></i>
-                  @endif
+                   <div class="d-inline-block pe-2 pb-2">
+                     @if ($title == 'integration')
+                     <i class="bi bi-puzzle-fill"></i>
+                     @else
+                     {{-- <i class="bi bi-people"></i> --}}
+                     <i class="bi bi-puzzle"></i>
+                     @endif
+                  </div>
                   Integrations
                 </a>
               </li>
@@ -422,29 +474,41 @@
             </h6>
             <ul class="nav flex-column mb-auto">
               <li class="nav-item">
-                <a class="nav-link d-flex align-items-center gap-2" href="#">
-                  <svg class="bi">
-                    <use xlink:href="#file-earmark-text" />
-                  </svg>
-                  Current month
+                <a @if ($title=='report' ) style="color: #0b2b2b; font-weight: 600" @else
+                  style="color: #000; font-weight: 400" @endif style="color: #0b2b2b"
+                  class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/reports') }}">
+                  <div class="d-inline-block pe-2 pb-2">
+                    <svg class="bi">
+                      <use xlink:href="#graph-up" />
+                    </svg>
+                  </div>
+                  Reports
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/list-history') }}">
+                <a @if ($title=='current' ) style="color: #0b2b2b; font-weight: 600" @else
+                  style="color: #000; font-weight: 400" @endif style="color: #0b2b2b"
+                  class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/list-history') }}">
                   {{-- <svg class="bi">
                     <use xlink:href="#file-earmark-text" />
                   </svg> --}}
-                  @if ($title == 'history')
-                  <i class="bi bi-clock-fill"></i>
-                  @else
-                  <i class="bi bi-clock-history"></i>
-                  @endif
+                  <div class="d-inline-block pe-2 pb-2">
+                    @if ($title == 'history')
+                    <i class="bi bi-clock-fill"></i>
+                    @else
+                    <i class="bi bi-clock-history"></i>
+                    @endif
+                  </div>
                   History
                   {{-- history --}}
                 </a>
               </li>
               {{-- <li class="nav-item">
-                <a class="nav-link d-flex align-items-center gap-2" href="#">
+                <a @if ()
+                    style="color: #0b2b2b; font-weight: 600"
+                @else
+                    style="color: #000; font-weight: 400"
+                @endif style="color: #0b2b2b" class="nav-link d-flex align-items-center gap-2" href="#">
                   <svg class="bi">
                     <use xlink:href="#file-earmark-text" />
                   </svg>
@@ -452,7 +516,11 @@
                 </a>
               </li> --}}
               {{-- <li class="nav-item">
-                <a class="nav-link d-flex align-items-center gap-2" href="#">
+                <a @if ()
+                    style="color: #0b2b2b; font-weight: 600"
+                @else
+                    style="color: #000; font-weight: 400"
+                @endif style="color: #0b2b2b" class="nav-link d-flex align-items-center gap-2" href="#">
                   <svg class="bi">
                     <use xlink:href="#file-earmark-text" />
                   </svg>
@@ -460,21 +528,58 @@
                 </a>
               </li> --}}
             </ul>
-
-            <hr class="my-3">
-
+            {{-- 
+            <hr class="my-3"> --}}
+            <h6
+              class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-body-secondary text-uppercase">
+              <span>My Profile</span>
+              {{-- <a class="link-secondary" href="#" aria-label="Add a new report">
+                <svg class="bi">
+                  <use xlink:href="#plus-circle" />
+                </svg>
+              </a> --}}
+            </h6>
             <ul class="nav flex-column mb-auto">
               <li class="nav-item">
-                <a class="nav-link d-flex align-items-center gap-2" href="#">
-                  <svg class="bi">
+                <a @if ($title=='my item' ) style="color: #0b2b2b; font-weight: 600" @else
+                  style="color: #000; font-weight: 400" @endif style="color: #0b2b2b"
+                  class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/my-item') }}">
+                  {{-- <svg class="bi">
+                    <use xlink:href="#file-earmark-text" />
+                  </svg> --}}
+
+                  <div class="d-inline-block pe-2 pb-2">
+                    @if ($title == 'my item')
+                    <i class="bi bi-archive-fill"></i>
+                    @else
+                    <i class="bi bi-archive"></i>
+                    @endif
+                  </div>
+                  My Item
+                </a>
+              </li>
+              <li class="nav-item">
+                <a @if ($title=='profile' ) style="color: #0b2b2b; font-weight: 600" @else
+                  style="color: #000; font-weight: 400" @endif style="color: #0b2b2b"
+                  class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/my-profile') }}">
+                  <div class="d-inline-block pe-2 pb-2">
+                    @if ($title == 'profile')
+                    <i class="bi bi-gear-fill"></i>
+                    @else
+                    <i class="bi bi-gear"></i>
+                    @endif
+                  </div>
+                  {{-- <svg class="bi">
                     <use xlink:href="#gear-wide-connected" />
-                  </svg>
+                  </svg> --}}
                   Settings
                 </a>
               </li>
-              <form id="logout-form" action="{{ route('logout') }}" method="POST">
+              <form id="logout-form" action="{{ route('logout') }}" method="POST" style="padding: 0px 4px">
                 <li class="nav-item">
-                  <a class="nav-link d-flex align-items-center gap-2" href="{{ route('logout') }}" onclick="event.preventDefault();
+                  <a @if ($title=='logout' ) style="color: #0b2b2b; font-weight: 600" @else
+                    style="color: #000; font-weight: 400" @endif style="color: #0b2b2b"
+                    class="nav-link d-flex align-items-center gap-2" href="{{ route('logout') }}" onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();">
                     <svg class="bi">
                       <use xlink:href="#door-closed" />
@@ -655,6 +760,12 @@
   <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
   <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>
   @stack('script')
+  <script>
+    function play() {
+          var audio = document.getElementById("scan");
+          audio.play();
+        }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
   </script>
@@ -800,7 +911,9 @@
   
   </script>
   <script type="text/javascript">
-    $('#search-product').select2({
+    $('#search-product').select2(
+      
+    {
       placeholder: 'Cari Produk',
       ajax: {
         url: '/auto-complete-product',
@@ -809,17 +922,64 @@
         processResults: function (data) {
           return {
             results:  $.map(data, function (item) {
+            
               return {
                 text: item.code +' || '+item.product_name+' || '+item.is_available,
-                id: item.id
+                id: item.id,
               }
+
             })
           };
         },
         cache: true, 
+        templateResult: formatRepo,
       }
     });
-  
+    function formatRepo (repo) {
+    if (repo.loading) {
+    return repo.text;
+    }
+    
+    // $('#myselect2').val(selected).trigger('change');
+    // $(document.body).on("change","#search-product",function(){
+    // alert(this.value);
+    // });
+    // $('#search-product').on("select2-selecting", function(e) {
+    // console.log('Selecting');
+    // $("#search-product").live('change', function(){
+    // alert(this.value);
+    $('.select2').on('select2:selecting', function(e) {
+    alert('Selecting: ' , e.params.args.data);
+    // });
+
+    // $('#body-table').append(`<tr id="table-`+data.id+`">
+    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
+    //     `+data.code+`</th>
+    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
+    //     `+data.product_name+`</th>
+    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
+    //     `+data.status+`</th>
+    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
+    //     `+data.is_consume+`</th>
+    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
+    //     `+data.available+`</th>
+    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
+    //     <button class="btn btn-secondary" id="remove-`+data.id+`"">
+    //                                     Delete
+    //                                 </button>
+    //                             </th>
+    //                         </tr>`);
+    //                         $('#body-table').append(`<input type=" hidden" id="input-id-`+data.id+`" name="id[]"
+    //       value="`+data.id+`">`);
+    //       $('#remove-'+data.id).click(function (e) {
+    //       e.preventDefault();
+    //       $( "input[name='sortby']").remove();
+    //       $("#table-"+data.id).addClass("d-none");
+    //       $("#input-id-"+data.id).remove();
+    //       });
+          });
+    
+    }
   </script>
   {{-- <script type="text/javascript">
       var timer;

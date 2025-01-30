@@ -9,7 +9,7 @@
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header">{{ __('Input Product') }}
+                <div class="card-header" style="font-weight: 600; color: #000;">{{ __('Input Product') }}
                 </div>
                 {{-- product_code
 product_name
@@ -28,18 +28,15 @@ consumable --}}
                         @csrf
                         <div class="mb-3">
                             <label for="name" class="form-label text-capitalize">name</label>
-                            <input type="text" class="form-control" id="name" name="name"
-                                placeholder="name">
+                            <input type="text" class="form-control" id="name" name="name" placeholder="name">
                         </div>
                         <div class="mb-3">
                             <label for="phone" class="form-label text-capitalize">phone</label>
-                            <input type="text" class="form-control" id="phone" name="phone"
-                                placeholder="phone">
+                            <input type="text" class="form-control" id="phone" name="phone" placeholder="phone">
                         </div>
                         <div class="mb-3">
                             <label for="email" class="form-label text-capitalize">email</label>
-                            <input type="text" class="form-control" id="email" name="email"
-                                placeholder="email">
+                            <input type="text" class="form-control" id="email" name="email" placeholder="email">
                         </div>
                         <select class="form-select form-select-lg mb-3" id="role" name="role" aria-label="role">
                             {{-- <option selected>Status</option> --}}
@@ -56,7 +53,7 @@ consumable --}}
                             <option class="text-capitalize" value="staff">Staff</option> --}}
                             {{-- <option value="Lost">Lost</option> --}}
                         </select>
-                       
+
                         <button class="btn btn-primary text-capitalize mt-5 w-100" id="inputData" type="submit">
                             submit
                         </button>

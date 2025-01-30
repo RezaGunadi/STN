@@ -5,7 +5,8 @@
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center text-body-secondary">
+                <div style="font-weight: 600; color: #000;"
+                    class="card-header d-flex justify-content-between align-items-center text-body-secondary">
                     {{ __('List Event') }}
 
                     <div>
@@ -20,8 +21,8 @@
                         <div class=" btn btn-secondary" style="color: white !inportant;" id="filter_btn"
                             aria-label="filterBtn">{{ __('Show Filter') }}
                         </div>
-                        <div class=" btn btn-secondary  d-none" style="color: white !inportant;"
-                            id="filter_btn_hide" aria-label="filter_btn_hide">
+                        <div class=" btn btn-secondary  d-none" style="color: white !inportant;" id="filter_btn_hide"
+                            aria-label="filter_btn_hide">
                             {{-- <svg class="bi">
                                 <use xlink:href="#plus-circle" />
                             </svg> --}}
@@ -44,7 +45,7 @@
                             <div class="col-md-6">
 
                                 <div class="mb-3">
-                                    <label for="event_name" class="text-capitalize form-label">event_name</label>
+                                    <label for="event_name" class="text-capitalize form-label">event name</label>
                                     <input type="event_name" class="form-control" id="event_name" name="event_name"
                                         aria-describedby="event_nameHelp">
                                     {{-- <div id="categoryHelp" class="form-text">category</div> --}}
@@ -53,9 +54,10 @@
                             <div class="col-md-6">
 
                                 <div class="mb-3">
-                                    <label for="event_location" class="text-capitalize form-label">event location</label>
-                                    <input type="event_location" class="form-control" id="event_location" name="event_location"
-                                        aria-describedby="event_locationHelp">
+                                    <label for="event_location" class="text-capitalize form-label">event
+                                        location</label>
+                                    <input type="event_location" class="form-control" id="event_location"
+                                        name="event_location" aria-describedby="event_locationHelp">
                                     {{-- <div id="categoryHelp" class="form-text">category</div> --}}
                                 </div>
                             </div>
@@ -63,8 +65,8 @@
 
                                 <div class="mb-3">
                                     <label for="starter_user" class="text-capitalize form-label">starter user</label>
-                                    <input type="starter_user" class="form-control" id="starter_user" name="starter_user"
-                                        aria-describedby="starter_userHelp">
+                                    <input type="starter_user" class="form-control" id="starter_user"
+                                        name="starter_user" aria-describedby="starter_userHelp">
                                     {{-- <div id="categoryHelp" class="form-text">category</div> --}}
                                 </div>
                             </div>
@@ -89,9 +91,31 @@
                             <div class="col-md-6">
 
                                 <div class="mb-3">
-                                    <label for="date" class="text-capitalize form-label">date</label>
-                                    <input type="date" class="form-control" id="date" name="date"
-                                        aria-describedby="dateHelp">
+                                    <label for="status" class="text-capitalize form-label">status</label>
+                                    <select class="form-control " id="status" name="status" aria-label="Status">
+                                        {{-- <option selected>Status</option> --}}
+                                        <option value="all">Semua Status</option>
+                                        <option value="pending">Berjalan</option>
+                                        <option value="finish">Selesai</option>
+                                    </select>
+                                    {{-- <div id="categoryHelp" class="form-text">category</div> --}}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+
+                                <div class="mb-3">
+                                    <label for="start_date" class="text-capitalize form-label">start date</label>
+                                    <input type="start_date" class="form-control" id="start_date" name="start_date"
+                                        aria-describedby="start_dateHelp">
+                                    {{-- <div id="categoryHelp" class="form-text">category</div> --}}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+
+                                <div class="mb-3">
+                                    <label for="end_date" class="text-capitalize form-label">end date</label>
+                                    <input type="end_date" class="form-control" id="end_date" name="end_date"
+                                        aria-describedby="end_dateHelp">
                                     {{-- <div id="categoryHelp" class="form-text">category</div> --}}
                                 </div>
                             </div>
@@ -165,7 +189,11 @@
                                     {{ $item->starterUser->name }}</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
-                                    {{ $item->closerUser->name }}</th>
+                                    @if ($item->closer_user_id!=0)
+
+                                    {{ $item->closerUser->name }}
+                                    @endif
+                                </th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
                                     {{ $item->client }}</th>
@@ -177,23 +205,39 @@
                                     {{ $item->finish_date }}</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
-                                    @if (Auth::user()->role=='admin' || Auth::user()->role=='staff')
+                                    @if ($item->finish_date==null||$item->finish_date=='')
                                         
-                                    <a href="{{ route('edit_event',['id' => $item->id]) }}">
+                                        @if (Auth::user()->role=='owner' || Auth::user()->role=='staff')
+                                            @if (Auth::user()->id == $item->created_by)
 
-                                        <button class="btn btn-secondary" >
-                                            edit
-                                        </button>
-                                    </a>
-                                    @else
-                                    <button class="btn btn-secondary no-access">
-                                        edit
-                                    </button>
-                                        
+                                                <a href="{{ route('edit_event',['id' => $item->id]) }}">
+
+                                                    <button class="btn btn-secondary">
+                                                        Edit
+                                                    </button>
+                                                </a>
+                                            @endif
+
+                                                <a href="{{ route('close_event_detail',['id' => $item->id]) }}">
+
+                                                    <button class="btn btn-secondary">
+                                                        Selesaikan
+                                                    </button>
+                                                </a>
+                                        @else
+                                            <button class="btn btn-secondary no-access">
+                                                edit
+                                            </button>
+
+                                        @endif
                                     @endif
-                                    @if (Auth::user()->role=='admin' ||Auth::user()->role=='staff')
+
+
                                         
-                                   <a href="{{ route('detail_event',['id' => $item->id]) }}">
+                                    @if (Auth::user()->role=='owner' || Auth::user()->role=='admin'
+                                    ||Auth::user()->role=='staff')
+
+                                    <a href="{{ route('detail_event',['id' => $item->id]) }}">
                                         <button class="btn btn-primary my-2 mx-2" style="white-space: nowrap">
                                             Detail
                                         </button>
@@ -202,7 +246,7 @@
                                     <button class="btn btn-primary no-access my-2 mx-2" style="white-space: nowrap">
                                         Detail
                                     </button>
-                                        
+
                                     @endif
                                 </th>
                             </tr>
@@ -210,10 +254,12 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="py-3">
-                    
-                    <div class="col">
-                        {{ $data->links() }}
+                <div class="py-3 mt-3">
+                    <div class="col d-md-block d-none">
+                        {{ $data->onEachSide(1)->links() }}
+                    </div>
+                    <div class="col d-md-none d-sm-block">
+                        {{ $data->onEachSide(0)->links() }}
                     </div>
                 </div>
             </div>

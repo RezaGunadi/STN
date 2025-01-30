@@ -1,127 +1,63 @@
 @extends('layouts.index')
+@push('css')
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+<link rel="stylesheet" href="/resources/demos/style.css">
 
+@endpush
 @section('content')
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center text-body-secondary">
-                    {{ __('List Event') }}
-
-                    <div>
-
-                        <a class=" btn btn-primary" style="color: white !inportant;"
-                            href="{{ URL::To('/input-event') }}" aria-label="Add event">
-                            <svg class="bi">
-                                <use xlink:href="#plus-circle" />
-                            </svg>
-                            {{ __('Add') }}
-                        </a>
-                        <div class=" btn btn-secondary" style="color: white !inportant;" id="filter_btn"
-                            aria-label="filterBtn">{{ __('Show Filter') }}
-                        </div>
-                        <div class=" btn btn-secondary  d-none" style="color: white !inportant;"
-                            id="filter_btn_hide" aria-label="filter_btn_hide">
-                            {{-- <svg class="bi">
-                                <use xlink:href="#plus-circle" />
-                            </svg> --}}
-                            {{ __('Hide Filter') }}
-                        </div>
-                    </div>
+                <div class="card-header" style="font-weight: 600; color: #000;">{{ __('Input Event') }}
                 </div>
-
+                {{-- product_code
+product_name
+category
+brand
+type
+code
+description
+payment_date
+purpose_used
+price
+status
+consumable --}}
                 <div class="card-body">
-                    {{-- @if (session('status'))
-                    <div class="alert alert-success" role="alert">
-                        {{ session('status') }}
-                </div>
-                @endif --}}
-
-                {{-- {{ __('You are logged in!') }} --}}
-                <form action="{{ route('list_event') }}" method="GET" id="filterForm" class="d-none">
-                    <div class="mb-5">
-                        <div class="row">
-                            <div class="col-md-6">
-
-                                <div class="mb-3">
-                                    <label for="event_name" class="text-capitalize form-label">event_name</label>
-                                    <input type="event_name" class="form-control" id="event_name" name="event_name"
-                                        aria-describedby="event_nameHelp">
-                                    {{-- <div id="categoryHelp" class="form-text">category</div> --}}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-
-                                <div class="mb-3">
-                                    <label for="event_location" class="text-capitalize form-label">event location</label>
-                                    <input type="event_location" class="form-control" id="event_location" name="event_location"
-                                        aria-describedby="event_locationHelp">
-                                    {{-- <div id="categoryHelp" class="form-text">category</div> --}}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-
-                                <div class="mb-3">
-                                    <label for="starter_user" class="text-capitalize form-label">starter user</label>
-                                    <input type="starter_user" class="form-control" id="starter_user" name="starter_user"
-                                        aria-describedby="starter_userHelp">
-                                    {{-- <div id="categoryHelp" class="form-text">category</div> --}}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-
-                                <div class="mb-3">
-                                    <label for="closer_user" class="text-capitalize form-label">closer user</label>
-                                    <input type="closer_user" class="form-control" id="closer_user" name="closer_user"
-                                        aria-describedby="closer_userHelp">
-                                    {{-- <div id="categoryHelp" class="form-text">category</div> --}}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-
-                                <div class="mb-3">
-                                    <label for="client" class="text-capitalize form-label">client</label>
-                                    <input type="client" class="form-control" id="client" name="client"
-                                        aria-describedby="clientHelp">
-                                    {{-- <div id="categoryHelp" class="form-text">category</div> --}}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-
-                                <div class="mb-3">
-                                    <label for="date" class="text-capitalize form-label">date</label>
-                                    <input type="date" class="form-control" id="date" name="date"
-                                        aria-describedby="dateHelp">
-                                    {{-- <div id="categoryHelp" class="form-text">category</div> --}}
-                                </div>
-                            </div>
-                            {{-- <div class="col-md-6">
-
-                                <div class="mb-3">
-                                    <label for="order_by"  class="text-capitalize form-label">Order By</label>
-                                    <select class="form-select" name="order_by" id="order_by" aria-label="Order By">
-                                         <option value="product_code">product_code</option>
-                                         <option value="product_name">product_name</option>
-                                         <option value="category">category</option>
-                                         <option value="brand">brand</option>
-                                         <option value="type">type</option>
-                                         <option value="payment_date">payment_date</option>
-                                         <option value="purpose_used">purpose_used</option>
-                                         <option value="price">price</option>
-                                         <option value="status">status</option>
-                                         <option value="event_location">event_location</option>
-                                         <option value="storage_location">storage_location</option>
-                                         <option value="is_available">is_available</option>
-                                         <option value="is_consumable">is_consumable</option>
-                                    </select>
-                                </div>
-                            </div> --}}
-
+                        <input type="hidden" name="event_id" value="{{ $event->id }}">
+                        <div class="mb-3">
+                            <label for="event_name" class="form-label text-capitalize">event name</label>
+                            <input readonly type="text" @if ($event) value="{{ $event->event_name }}" @endif
+                                class="form-control @error('event_name') is-invalid @enderror" required id="event_name"
+                                name="event_name" placeholder="Dufan fun Play">
+                            @error('event_name')
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
+                            @enderror
                         </div>
-                        <button type="submit" class="btn btn-primary col-12">Submit</button>
-
-                    </div>
-                </form>
+                        <div class="mb-3">
+                            <label for="event_location" class="form-label text-capitalize">event location</label>
+                            <input readonly type="text" @if ($event) value="{{ $event->event_location }}" @endif
+                                class="form-control @error('event_location') is-invalid @enderror" required
+                                id="event_location" name="event_location" placeholder="Dufan Jakarta">
+                            @error('event_location')
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
+                            @enderror
+                        </div>
+                <div class="mb-3">
+                    <label for="client" class="form-label text-capitalize">client</label>
+                    <input readonly type="text" @if ($event) value="{{ $event->client }}" @endif
+                        class="form-control @error('client') is-invalid @enderror" required id="client" name="client"
+                        placeholder="PT. XYZ">
+                    @error('client')
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                    @enderror
+                </div>
                 <div class="table-responsive">
 
                     <table class="table w-100">
@@ -130,24 +66,27 @@
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
                                     class=" text-capitalize">#</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class=" text-capitalize">event name </th>
+                                    class=" text-capitalize">product code</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class=" text-capitalize">event location </th>
+                                    class=" text-capitalize">product name</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class=" text-capitalize">starter user</th>
+                                    class=" text-capitalize">category</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class=" text-capitalize">closer user</th>
+                                    class=" text-capitalize">brand</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class=" text-capitalize">client</th>
+                                    class=" text-capitalize">type</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class=" text-capitalize">start date</th>
-                                <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class=" text-capitalize">finish date</th>
+                                    class=" text-capitalize">description</th>
+                                {{-- <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class=" text-capitalize">purpose used</th> --}}
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
                                     class=" text-capitalize">Action</th>
                             </tr>
                         </thead>
                         <tbody style="font-weight: 400!important; font-size: 14px;">
+                            @php
+                            $number = 0;
+                            @endphp
                             @foreach ($data as $item)
                             @php
                             $number = $number+1;
@@ -156,66 +95,36 @@
                                 <th scope="row" style="font-weight: 400!important;">{{ $number }}</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
-                                    {{ $item->event_name }}</th>
+                                    {{ $item->product_code }}</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
-                                    {{ $item->event_location }}</th>
+                                    {{ $item->product_name }}</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
-                                    {{ $item->starterUser->name }}</th>
+                                    {{ $item->category }}</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
-                                    {{ $item->closerUser->name }}</th>
+                                    {{ $item->brand }}
+                                </th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
-                                    {{ $item->client }}</th>
+                                    {{ $item->type }}
+                                </th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
-                                    {{ $item->start_date }}</th>
+                                    {{ $item->description }}</th>
+                                {{-- <th scope="col" style="text-align: center;font-weight: 400!important;"
+                                    class=" text-capitalize">
+                                    {{ $item->purpose_used }}</th> --}}
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
-                                    {{ $item->finish_date }}</th>
-                                <th scope="col" style="text-align: center;font-weight: 400!important;"
-                                    class=" text-capitalize">
-                                    @if (Auth::user()->role=='admin' || Auth::user()->role=='staff')
-                                        
-                                    <a href="{{ route('edit_product',['id' => $item->id]) }}">
-
-                                        <button class="btn btn-secondary" >
-                                            edit
-                                        </button>
-                                    </a>
-                                    @else
-                                    <button class="btn btn-secondary no-access">
-                                        edit
-                                    </button>
-                                        
-                                    @endif
-                                    @if (Auth::user()->role=='admin' ||Auth::user()->role=='staff')
-                                        
-                                    <a href="{{ URL::To('/generate-qr?qr='.$item->qr_string) }}">
-
-                                        <button class="btn btn-primary my-2 mx-2" style="white-space: nowrap">
-                                            Detail
-                                        </button>
-                                    </a>
-                                    @else
-                                    <button class="btn btn-primary no-access my-2 mx-2" style="white-space: nowrap">
-                                        Detail
-                                    </button>
-                                        
-                                    @endif
+                                    <input type="checkbox" name="item_id[]" value="{{ $item->id }}"
+                                        {{ $event!=null ? $event->id==$item->event_id ?'checked readonly disabled':'':'' }}>
                                 </th>
                             </tr>
                             @endforeach
                         </tbody>
                     </table>
-                </div>
-                <div class="py-3">
-                    
-                    <div class="col">
-                        {{ $data->links() }}
-                    </div>
                 </div>
             </div>
         </div>
@@ -223,19 +132,10 @@
 </div>
 </div>
 @endsection
-
 @push('script')
 <script>
-    // $(document).ready(function() { 
-    // $( ".no-access" ).click(function() {
-    // alert( "anda tidak memiliki hak akses" );
-    // });
-    // // $(document).ready(function() { 
-    // //     $("#filter_btn").click(function () {
-    // //         alert("Hello!");
-    // //     // $(".hide_div").hide();
-    // //     });
-    // });
+    $( function() {
+        $( "#date" ).datepicker();
+      } );
 </script>
-{{-- filterBtn filterForm --}}
 @endpush

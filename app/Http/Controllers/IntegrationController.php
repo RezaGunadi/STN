@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\JobDetailsDB;
 use App\Models\ProductDB;
 use App\Models\ProductTypeDB;
 use App\Models\User;
@@ -45,13 +46,41 @@ class IntegrationController extends Controller
             $product->user_id=$request->staf_id;
             $product->save();
         }
-        return redirect(URL::To('/integration'));
+        return redirect(URL::To('/integration'))->with('success', 'Berhasil memproses produk');
+    }
+    public function close(Request $request)
+    {
+        $data = $request->all();
+        // dd($data);
+        $ids = [];
+        foreach ($request->id as  $value) {
+            array_push($ids, $value);
+        }
+        $products =  ProductDB::whereIn('id', $ids)->get();
+        foreach ($products as $product) {
+            $product->is_available=1;
+            $product->user_id=0;
+            $product->save();
+        }
+        return redirect(URL::To('/integration-menu'))->with('success', 'Berhasil memproses produk');
     }
     public function integration(Request $request)
     {
         $data = $request->all();
       
         return view('page.integration.input', [ 'title' => 'integration']);
+    }
+    public function menu(Request $request)
+    {
+        $data = $request->all();
+      
+        return view('page.integration.menu', [ 'title' => 'integration']);
+    }
+    public function closeIntegration(Request $request)
+    {
+        $data = $request->all();
+      
+        return view('page.integration.close', [ 'title' => 'integration']);
     }
     public function generateQr(Request $request)
     {
@@ -114,7 +143,8 @@ class IntegrationController extends Controller
         $text = $request->text;
             $results = array();
         $query = ProductDB::where('qr_string', 'LIKE', "%$request->text%")
-            ->where('is_available', 1)->first();
+            // ->where('is_available', 1)
+            ->first();
         if ($query) {
             $query->type='product';
             $query->is_consume= $query->is_consumable==1?'Yes':'No';

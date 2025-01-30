@@ -24,11 +24,15 @@ class ReportDB extends Authenticatable
     ];
 
 
-    public function user()
+    public function product()
+    {
+        return $this->belongsTo(ProductDB::class, 'item_id');
+    }
+    public function pelaku()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-    public function createdUser()
+    public function reporter()
     {
         return $this->belongsTo(User::class, 'created_by');
     }

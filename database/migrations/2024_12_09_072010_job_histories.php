@@ -21,7 +21,7 @@ class JobHistories extends Migration
             $table->string('lat')->nullable();
             $table->string('lng')->nullable();
             $table->integer('starter_user_id');
-            $table->integer('closer_user_id');
+            $table->integer('closer_user_id')->default(0);
             $table->string('user_city')->nullable();
             $table->string('user_province')->nullable();
             $table->string('user_address')->nullable();
@@ -31,8 +31,8 @@ class JobHistories extends Migration
             // $table->foreign('starter_user_id')->references('id')->on('users');
             // $table->foreign('closer_user_id')->references('id')->on('users');
             $table->integer('created_by');
-            $table->integer('deleted_by');
-            $table->integer('updated_by');
+            $table->integer('deleted_by')->default(0);
+            $table->integer('updated_by')->default(0);
             $table->timestamps();
             $table->softDeletes();
         });

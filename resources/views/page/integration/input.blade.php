@@ -62,9 +62,10 @@
 
         </div>
     </div>
-    <div class="my-3 py-3">
+    <br>
+    {{-- <div class="my-3 py-3">
         <select id="search-product" class="cari form-control w-100" name="cari Produk"></select>
-    </div>
+    </div> --}}
     <form action="{{ route('input_integration') }}" method="POST">
         <input type="hidden" name="staf_id" id="staf_id">
         <div class="table-responsive">
@@ -82,10 +83,6 @@
                         <th scope="col" style="white-space: nowrap; text-align: center;" class=" text-capitalize">
                             Condition
                         </th>
-                        <th scope="col" style="white-space: nowrap; text-align: center;" class=" text-capitalize">Is
-                            Consumable</th>
-                        <th scope="col" style="white-space: nowrap; text-align: center;" class=" text-capitalize">Is
-                            available</th>
                         <th scope="col" style="white-space: nowrap; text-align: center;" class=" text-capitalize">Action
                         </th>
 
@@ -116,7 +113,13 @@
                 </tbody>
             </table>
         </div>
+        @if (Auth::user()->role =='staff gudang' || Auth::user()->role =='owner')
+            
         <button class="btn btn-primary w-100" id="inputData" type="submit">Submit</button>
+        @else
+        
+        <div class="btn btn-secondary no-access w-100" >Submit</div>
+        @endif
     </form>
 </div>
 @endsection
@@ -193,10 +196,6 @@
                         <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
                             `+data.status+`</th>
                         <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-                            `+data.is_consume+`</th>
-                        <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-                            `+data.available+`</th>
-                        <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
                             <button class="btn btn-secondary" id="remove-`+data.id+`"">
                                 Delete
                             </button>
@@ -229,6 +228,8 @@
                 // Could not stop scanning for reasons specified in `error`.
                 // This conditions should ideally not happen.
                 });
+                var audio = document.getElementById("scan");
+                audio.play();
             // html5QRCodeScanner.clear();
         }
 

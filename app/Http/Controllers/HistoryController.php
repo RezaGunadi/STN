@@ -51,7 +51,7 @@ class HistoryController extends Controller
         if (array_key_exists('type', $data)) {
             $result = $result->where('ref_type', 'LIKE', '%' . $data['type'] . '%');
         }
-        $result = $result->paginate(5);
+        $result = $result->paginate(10);
         // $result = $result->get();
         return view('page.histories.list', ['data' => $result, 'number' => $startFrom, 'title' => 'history']);
     }

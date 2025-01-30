@@ -36,4 +36,8 @@ class ProductDB extends Authenticatable
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+    public function eventDetail()
+    {
+        return $this->belongsTo(JobsDB::class, 'event_id');
+    }
 }

@@ -9,7 +9,7 @@
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header">{{ __('Input Product') }}
+                <div class="card-header" style="font-weight: 600; color: #000;">{{ __('Input Event') }}
                 </div>
                 {{-- product_code
 product_name
@@ -24,128 +24,144 @@ price
 status
 consumable --}}
                 <div class="card-body">
-                    <form action="{{ route('submit_edit_product') }}" method="POST">
+                    <form action="{{ route('submit_event') }}" method="POST">
                         @csrf
-                        <input type="hidden" id="id" name="id" value="{{ $data->id }}">
-                        {{-- <div class="mb-3">
-                            <label for="product_code" class="form-label text-capitalize">product Code</label>
-                            <input type="text" class="form-control" value="{{ $data->product_code }}" id="product_code"
-                                name="product_code" placeholder="Kosongkan Untuk Auto Generate">
-                        </div>
-                        <div class="mb-3"> --}}
-                            {{-- <label for="product_name" class="form-label text-capitalize">product Name</label>
-                            <input type="text" class="form-control @error('product_name') is-invalid @enderror" required
-                                value="{{ $data->product_name }}" id="product_name" name="product_name"
-                                placeholder="TV UHD Samsung 4k">
-                            @error('product_name')
-                            <span class="invalid-feedback" role="alert">
-                                <strong>{{ $message }}</strong>
-                            </span>
-                            @enderror
-                        </div> --}}
-                        @if (Auth::user()->role == 'admin' || Auth::user()->role == 'ADMIN')
-                            
+                        <input type="hidden" name="event_id" value="{{ $event->id }}">
                         <div class="mb-3">
-                            <label for="description" class="form-label text-capitalize">description</label>
-                            <input type="text" class="form-control @error('description') is-invalid @enderror" required
-                                value="{{ $data->description }}" id="description" name="description"
-                                placeholder="Samsung">
-                            @error('description')
+                            <label for="event_name" class="form-label text-capitalize">event name</label>
+                            <input type="text" @if ($event) value="{{ $event->event_name }}" @endif
+                                class="form-control @error('event_name') is-invalid @enderror" required id="event_name"
+                                name="event_name" placeholder="Dufan fun Play (2024)">
+                            @error('event_name')
                             <span class="invalid-feedback" role="alert">
                                 <strong>{{ $message }}</strong>
                             </span>
                             @enderror
                         </div>
                         <div class="mb-3">
-                            <label for="brand" class="form-label text-capitalize">Brand</label>
-                            <input type="text" class="form-control @error('brand') is-invalid @enderror" required
-                                value="{{ $data->brand }}" id="brand" name="brand" placeholder="Samsung">
-                            @error('brand')
-                            <span class="invalid-feedback" role="alert">
-                                <strong>{{ $message }}</strong>
-                            </span>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="category" class="form-label text-capitalize">category</label>
-                            <input type="text" class="form-control @error('category') is-invalid @enderror" required
-                                value="{{ $data->category }}" id="category" name="category" placeholder="TV">
-                            @error('category')
-                            <span class="invalid-feedback" role="alert">
-                                <strong>{{ $message }}</strong>
-                            </span>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="type" class="form-label text-capitalize">type</label>
-                            <input type="text" class="form-control @error('type') is-invalid @enderror" required
-                                value="{{ $data->type }}" id="type" name="type" placeholder="DUE800">
-                            @error('type')
+                            <label for="event_location" class="form-label text-capitalize">event location</label>
+                            <input type="text" @if ($event) value="{{ $event->event_location }}" @endif
+                                class="form-control @error('event_location') is-invalid @enderror" required
+                                id="event_location" name="event_location" placeholder="Dufan Jakarta">
+                            @error('event_location')
                             <span class="invalid-feedback" role="alert">
                                 <strong>{{ $message }}</strong>
                             </span>
                             @enderror
                         </div>
                         {{-- <div class="mb-3">
-                            <label for="date" class="form-label text-capitalize">payment Date</label>
-                            <input type="text" class="form-control @error('date') is-invalid @enderror" required
-                                name="date" value="{{ $data->date }}" id="date">
-                        </div> --}}
-                        <div class="mb-3">
-                            <label for="price" class="form-label text-capitalize">Price</label>
-                            <input type="text" class="form-control @error('price') is-invalid @enderror" required
-                                value="{{ $data->price }}" id="price" name="price" placeholder="100000">
-                            @error('phone')
-                            <span class="invalid-feedback" role="alert">
-                                <strong>{{ $message }}</strong>
-                            </span>
-                            @enderror
-                        </div>
-                        @else
-                        <div class="mb-3">
-                            <label for="storage_location" class="form-label text-capitalize">storage location</label>
-                            <input type="text" class="form-control @error('storage_location') is-invalid @enderror"
-                                required value="{{ $data->storage_location }}" id="storage_location"
-                                name="storage_location" placeholder="100000">
-                            @error('phone')
-                            <span class="invalid-feedback" role="alert">
-                                <strong>{{ $message }}</strong>
-                            </span>
-                            @enderror
-                        </div>
-                        @endif
-                        <div class="mb-3">
-                            <label for="note" class="form-label text-capitalize">note</label>
-                            <input type="text" class="form-control @error('note') is-invalid @enderror" required
-                                value="{{ $data->note }}" id="note" name="note" placeholder="100000">
-                            @error('phone')
-                            <span class="invalid-feedback" role="alert">
-                                <strong>{{ $message }}</strong>
-                            </span>
-                            @enderror
-                        </div>
-                        <select class="form-select form-select-lg mb-3" id="status" name="status" aria-label="Status">
-                            {{-- <option selected>Status</option> --}}
-                            <option {{ $data->status == 'Good' ?  "selected":'' }} value="Good">Good</option>
-                            <option {{ $data->status == 'Not Good' ?  "selected":'' }} value="Not Good">Not Good
-                            </option>
-                            <option {{ $data->status == 'Broken' ?  "selected":'' }} value="Broken">Broken</option>
-                            <option {{ $data->status == 'Lost' ?  "selected":'' }} value="Lost">Lost</option>
-                        </select>
-                       
-                        <button class="btn btn-primary text-capitalize mt-5 w-100" id="inputData" type="submit">
-                            submit
-                        </button>
-                    </form>
+                            <label for="lat" class="form-label text-capitalize">lat</label>
+                            <input type="text" @if ($event)
+                                value="{{ $event->lat }}"
+                        @endif class="form-control @error('lat') is-invalid @enderror" required id="lat"
+                        name="lat" placeholder="Samsung">
+                        @error('lat')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                        @enderror
                 </div>
+                <div class="mb-3">
+                    <label for="lng" class="form-label text-capitalize">lng</label>
+                    <input type="text" @if ($event) value="{{ $event->lng }}" @endif
+                        class="form-control @error('lng') is-invalid @enderror" required id="lng" name="lng"
+                        placeholder="Samsung">
+                    @error('lng')
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                    @enderror
+                </div> --}}
+                <div class="mb-3">
+                    <label for="client" class="form-label text-capitalize">client</label>
+                    <input type="text" @if ($event) value="{{ $event->client }}" @endif
+                        class="form-control @error('client') is-invalid @enderror" required id="client" name="client"
+                        placeholder="PT. XYZ">
+                    @error('client')
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                    @enderror
+                </div>
+                <div class="table-responsive">
+
+                    <table class="table w-100">
+                        <thead>
+                            <tr>
+                                <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class=" text-capitalize">#</th>
+                                <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class=" text-capitalize">product code</th>
+                                <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class=" text-capitalize">product name</th>
+                                <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class=" text-capitalize">category</th>
+                                <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class=" text-capitalize">brand</th>
+                                <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class=" text-capitalize">type</th>
+                                <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class=" text-capitalize">description</th>
+                                {{-- <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class=" text-capitalize">purpose used</th> --}}
+                                <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class=" text-capitalize">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody style="font-weight: 400!important; font-size: 14px;">
+                            @php
+                            $number = 0;
+                            @endphp
+                            @foreach ($data as $item)
+                            @php
+                            $number = $number+1;
+                            @endphp
+                            <tr>
+                                <th scope="row" style="font-weight: 400!important;">{{ $number }}</th>
+                                <th scope="col" style="text-align: center;font-weight: 400!important;"
+                                    class=" text-capitalize">
+                                    {{ $item->product_code }}</th>
+                                <th scope="col" style="text-align: center;font-weight: 400!important;"
+                                    class=" text-capitalize">
+                                    {{ $item->product_name }}</th>
+                                <th scope="col" style="text-align: center;font-weight: 400!important;"
+                                    class=" text-capitalize">
+                                    {{ $item->category }}</th>
+                                <th scope="col" style="text-align: center;font-weight: 400!important;"
+                                    class=" text-capitalize">
+                                    {{ $item->brand }}
+                                </th>
+                                <th scope="col" style="text-align: center;font-weight: 400!important;"
+                                    class=" text-capitalize">
+                                    {{ $item->type }}
+                                </th>
+                                <th scope="col" style="text-align: center;font-weight: 400!important;"
+                                    class=" text-capitalize">
+                                    {{ $item->description }}</th>
+                                {{-- <th scope="col" style="text-align: center;font-weight: 400!important;"
+                                    class=" text-capitalize">
+                                    {{ $item->purpose_used }}</th> --}}
+                                <th scope="col" style="text-align: center;font-weight: 400!important;"
+                                    class=" text-capitalize">
+                                    <input type="checkbox" name="item_id[]" value="{{ $item->id }}"
+                                        {{ $event!=null ? $event->id==$item->event_id ?'checked readonly disabled':'':'' }}>
+                                </th>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-primary text-capitalize mt-5 w-100" id="inputData" type="submit">
+                    submit
+                </button>
+                </form>
             </div>
         </div>
     </div>
 </div>
+</div>
 @endsection
 @push('script')
-<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
-<script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>
 <script>
     $( function() {
         $( "#date" ).datepicker();

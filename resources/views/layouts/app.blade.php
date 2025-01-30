@@ -8,6 +8,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>STN Smart System</title>
+    <link rel="shortcut icon" href="{{ URL::To('assets/img/stn_long.png') }}" type="image/x-icon">
     {{-- <title>{{ config('app.name', 'STN Smart System') }}</title> --}}
 
     <!-- Scripts -->
@@ -20,6 +21,9 @@
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        
+    </style>
 </head>
 <body>
     <div id="app">
@@ -83,7 +87,11 @@
                 </div>
             </div>
         </nav>
-
+@if (session('error'))
+<div class="alert alert-danger">
+    {{ session('error') }}
+</div>
+@endif
         <main class="py-4">
             @yield('content')
         </main>

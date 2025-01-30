@@ -7,6 +7,7 @@ use App\Models\ProductDB;
 use App\Models\ProductTypeDB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 
 class ProductController extends Controller
@@ -46,8 +47,8 @@ class ProductController extends Controller
             $limit = $data['order_priority'];
         }
         $result = ProductDB::
-        // take($limit)->skip($startFrom)->
-        orderBy($orderBy, $orderPriority);
+            // take($limit)->skip($startFrom)->
+            orderBy($orderBy, $orderPriority);
 
         if (array_key_exists('category', $data)) {
             $result = $result->where('category', 'LIKE', '%' . $data['category'] . '%');
@@ -64,84 +65,136 @@ class ProductController extends Controller
         if (array_key_exists('product_name', $data)) {
             $result = $result->where('product_name', 'LIKE', '%' . $data['product_name'] . '%');
         }
-        $result = $result->paginate(5);
+        $result = $result->paginate(10);
         // $result = $result->get();
         return view('page.product.list', ['data' => $result, 'number' => $startFrom, 'title' => 'product']);
+    }
+    public function myItem(Request $request)
+    {
+        $data = $request->all();
+        $startFrom = 0;
+        $limit = 100;
+        $orderBy = 'product_code';
+        $orderPriority = 'asc';
+        if (array_key_exists('start_from', $data)) {
+            $startFrom = $data['start_from'];
+        }
+        if (array_key_exists('limit', $data)) {
+            $limit = $data['limit'];
+        }
+        if (array_key_exists('order_by', $data)) {
+            $limit = $data['order_by'];
+        }
+        if (array_key_exists('order_priority', $data)) {
+            $limit = $data['order_priority'];
+        }
+        $result = ProductDB::
+            // take($limit)->skip($startFrom)->
+            orderBy($orderBy, $orderPriority);
+        $result = $result->where('user_id', Auth::user()->id);
+
+        if (array_key_exists('category', $data)) {
+            $result = $result->where('category', 'LIKE', '%' . $data['category'] . '%');
+        }
+        if (array_key_exists('type', $data)) {
+            $result = $result->where('type', 'LIKE', '%' . $data['type'] . '%');
+        }
+        if (array_key_exists('brand', $data)) {
+            $result = $result->where('brand', 'LIKE', '%' . $data['brand'] . '%');
+        }
+        if (array_key_exists('product_code', $data)) {
+            $result = $result->where('product_code', 'LIKE', '%' . $data['product_code'] . '%');
+        }
+        if (array_key_exists('product_name', $data)) {
+            $result = $result->where('product_name', 'LIKE', '%' . $data['product_name'] . '%');
+        }
+        $result = $result->paginate(10);
+        return view('page.profile.item_list', ['data' => $result, 'number' => $startFrom, 'title' => 'my item']);
     }
     public function submit(Request $request)
     {
         $data = $request->all();
+        # code...
         $data['category'] = strtoupper($data['category']);
         $data['brand'] = strtoupper($data['brand']);
         $data['type'] = strtoupper($data['type']);
+        $data['looping'] = (int) $request->total_input_item;
         $productType = ProductTypeDB::whereNull('deleted_at')
             ->where('category', $data['category'])
             ->where('brand', $data['brand'])
             ->where('type', $data['type'])->first();
+        for ($xxx = 0; $xxx < $data['looping']; $xxx++) {
 
-        $product = new ProductDB();
-        $product->product_name = $data['name'];
-        $product->description = $data['description'];
-        $product->brand = $data['brand'];
-        $product->category = $data['category'];
-        $product->type = $data['type'];
-        $product->payment_date =
-            date("Y-m-d", strtotime($data['date']));
-        $product->price = $data['price'];
-        $product->status = $data['status'];
-        // dd($data);qr_string
-        $totalType = ProductDB::whereNull('deleted_at')
-            ->where('category', $data['category'])
-            ->where('brand', $data['brand'])
-            ->where('type', $data['type'])->count();
-        if ($productType) {
-            $newCode = $productType->code;
-            $code = $this->generateCode($totalType, $newCode);
-        } else {
-            $newCode = $this->generateNewCode($data['category'], $data['brand'], $data['type']);
-            $code = $this->generateCode($totalType, $newCode);
-        }
-        if (array_key_exists('consumable', $data)) {
-            $product->is_consumable = 1;
-        }
-        if ($data['code'] != null) {
-            $product->product_code = $data['code'];
-        } else {
-            $product->product_code = $code;
-        }
-        $product->code = $code;
+            $product = new ProductDB();
+            $product->product_name = $data['name'];
+            $product->description = $data['description'];
+            $product->brand = $data['brand'];
+            $product->category = $data['category'];
+            $product->type = $data['type'];
+            $product->payment_date =
+                date("Y-m-d", strtotime($data['date']));
+            $product->price = $data['price'];
+            $product->status = $data['status'];
+            // dd($data);qr_string
+            $totalType = ProductDB::whereNull('deleted_at')
+                ->where('category', $data['category'])
+                ->where('brand', $data['brand'])
+                ->where('type', $data['type'])->count();
+            if ($productType) {
+                $newCode = $productType->code;
+                $code = $this->generateCode($totalType, $newCode);
+            } else {
+                $newCode = $this->generateNewCode($data['category'], $data['brand'], $data['type']);
+                $code = $this->generateCode($totalType, $newCode);
+            }
+            if (array_key_exists('consumable', $data)) {
+                $product->is_consumable = 1;
+            }
+            if ($data['code'] != null) {
+                if ($data['looping'] > 1) {
+                    $product->product_code = $code;
+                } else {
+                    $product->product_code = $data['code'];
+                }
+            } else {
+                $product->product_code = $code;
+            }
+            $product->code = $code;
 
-        $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $charactersLength = strlen($characters);
-        $randomString = '';
-        for ($i = 0; $i < 100; $i++) {
-            $randomString .= $characters[rand(0, $charactersLength - 1)];
-        }
-        $product->qr_string = $randomString;
-        $product->created_by =
-            Auth::user()->id;
-        $product->save();
-        // dd($data);
+            $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            $charactersLength = strlen($characters);
+            $randomString = '';
+            for ($i = 0; $i < 100; $i++) {
+                $randomString .= $characters[rand(0, $charactersLength - 1)];
+            }
+            $product->qr_string = $randomString;
+            $product->created_by =
+                Auth::user()->id;
+            $product->save();
+            // dd($data);
 
-        if (!$productType) {
-            $productType = new ProductTypeDB();
-            $productType->category = $data['category'];
-            $productType->brand = $data['brand'];
-            $productType->type = $data['type'];
-            $productType->code = $newCode;
-            $productType->created_by = Auth::user()->id;
-            $productType->save();
+            if (!$productType) {
+                $productType = new ProductTypeDB();
+                $productType->category = $data['category'];
+                $productType->brand = $data['brand'];
+                $productType->type = $data['type'];
+                $productType->code = $newCode;
+                $productType->created_by = Auth::user()->id;
+                $productType->save();
+            }
         }
-        return redirect(URL::To('/list-product'));
+
+
+        return redirect(URL::To('/list-product'))->with('success', 'Berhasil menambahkan produk');
     }
     public function input()
     {
-        return view('page.product.input',['title' => 'product']);
+        return view('page.product.input', ['title' => 'product']);
     }
     public function edit($code)
     {
         $product = ProductDB::where('product_code', $code)->first();
-        return view('page.product.edit', ['data' =>$product, 'title' => 'product']);
+        return view('page.product.edit', ['data' => $product, 'title' => 'product']);
     }
 
     public function submitEdit(Request $request)
@@ -208,10 +261,10 @@ class ProductController extends Controller
         } else {
             $product->status = $oldData->status;
         }
-        if (array_key_exists('event_location', $data)) {
-            $product->event_location = $data['event_location'];
+        if (array_key_exists('event_id', $data)) {
+            $product->event_id = $data['event_id'];
         } else {
-            $product->event_location = $oldData->event_location;
+            $product->event_id = $oldData->event_id;
         }
         if (array_key_exists('storage_location', $data)) {
             $product->storage_location = $data['storage_location'];
@@ -273,7 +326,7 @@ class ProductController extends Controller
         $column = '';
 
 
-        if(array_key_exists('product_code',$data)){
+        if (array_key_exists('product_code', $data)) {
             if ($data['product_code'] != $additionalData['product_code']) {
                 $column = 'product_code';
                 $old = $additionalData['product_code'];
@@ -281,7 +334,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('product_name',$data)){
+        if (array_key_exists('product_name', $data)) {
             if ($data['product_name'] != $additionalData['product_name']) {
                 $column = 'product_name';
                 $old = $additionalData['product_name'];
@@ -289,7 +342,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('category',$data)){
+        if (array_key_exists('category', $data)) {
 
             if ($data['category'] != $additionalData['category']) {
                 $column = 'category';
@@ -298,7 +351,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('brand',$data)){
+        if (array_key_exists('brand', $data)) {
 
             if ($data['brand'] != $additionalData['brand']) {
                 $column = 'brand';
@@ -307,7 +360,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('type',$data)){
+        if (array_key_exists('type', $data)) {
 
             if ($data['type'] != $additionalData['type']) {
                 $column = 'type';
@@ -316,7 +369,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('code',$data)){
+        if (array_key_exists('code', $data)) {
 
             if ($data['code'] != $additionalData['code']) {
                 $column = 'code';
@@ -325,7 +378,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('description',$data)){
+        if (array_key_exists('description', $data)) {
 
             if ($data['description'] != $additionalData['description']) {
                 $column = 'description';
@@ -334,7 +387,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('payment_date',$data)){
+        if (array_key_exists('payment_date', $data)) {
 
             if ($data['payment_date'] != $additionalData['payment_date']) {
                 $column = 'payment_date';
@@ -343,7 +396,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('purpose_used',$data)){
+        if (array_key_exists('purpose_used', $data)) {
 
             if ($data['purpose_used'] != $additionalData['purpose_used']) {
                 $column = 'purpose_used';
@@ -352,7 +405,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('price',$data)){
+        if (array_key_exists('price', $data)) {
 
             if ($data['price'] != $additionalData['price']) {
                 $column = 'price';
@@ -361,7 +414,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('status',$data)){
+        if (array_key_exists('status', $data)) {
 
             if ($data['status'] != $additionalData['status']) {
                 $column = 'status';
@@ -370,16 +423,16 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('event_location',$data)){
+        if (array_key_exists('event_id', $data)) {
 
-            if ($data['event_location'] != $additionalData['event_location']) {
-                $column = 'event_location';
-                $old = $additionalData['event_location'];
-                $new = $data['event_location'];
+            if ($data['event_id'] != $additionalData['event_id']) {
+                $column = 'event_id';
+                $old = $additionalData['event_id'];
+                $new = $data['event_id'];
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('storage_location',$data)){
+        if (array_key_exists('storage_location', $data)) {
 
             if ($data['storage_location'] != $additionalData['storage_location']) {
                 $column = 'storage_location';
@@ -388,7 +441,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('is_available',$data)){
+        if (array_key_exists('is_available', $data)) {
 
             if ($data['is_available'] != $additionalData['is_available']) {
                 $column = 'is_available';
@@ -397,7 +450,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('note',$data)){
+        if (array_key_exists('note', $data)) {
 
             if ($data['note'] != $additionalData['note']) {
                 $column = 'note';
@@ -406,7 +459,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('user_id',$data)){
+        if (array_key_exists('user_id', $data)) {
 
             if ($data['user_id'] != $additionalData['user_id']) {
                 $column = 'user_id';
@@ -415,7 +468,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('qr_string',$data)){
+        if (array_key_exists('qr_string', $data)) {
 
             if ($data['qr_string'] != $additionalData['qr_string']) {
                 $column = 'qr_string';
@@ -424,7 +477,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('is_consumable',$data)){
+        if (array_key_exists('is_consumable', $data)) {
 
             if ($data['is_consumable'] != $additionalData['is_consumable']) {
                 $column = 'is_consumable';
@@ -433,7 +486,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('remarks',$data)){
+        if (array_key_exists('remarks', $data)) {
 
             if ($data['remarks'] != $additionalData['remarks']) {
                 $column = 'remarks';
@@ -442,7 +495,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('created_by',$data)){
+        if (array_key_exists('created_by', $data)) {
 
             if ($data['created_by'] != $additionalData['created_by']) {
                 $column = 'created_by';
@@ -451,7 +504,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('deleted_by',$data)){
+        if (array_key_exists('deleted_by', $data)) {
 
             if ($data['deleted_by'] != $additionalData['deleted_by']) {
                 $column = 'deleted_by';
@@ -460,7 +513,7 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
-        if(array_key_exists('updated_by',$data)){
+        if (array_key_exists('updated_by', $data)) {
 
             if ($data['updated_by'] != $additionalData['updated_by']) {
                 $column = 'updated_by';
@@ -470,12 +523,12 @@ class ProductController extends Controller
             }
         }
         $product->save();
-        $oldData->updated_by= Auth::user()->id;
+        $oldData->updated_by = Auth::user()->id;
         $oldData->save();
         $oldData->delete();
 
 
-        return redirect(URL::To('/list-product'));
+        return redirect(URL::To('/list-product'))->with('success', 'Berhasil mengubah data produk');
     }
 
     function generateNewCode($key1, $key2, $key3)

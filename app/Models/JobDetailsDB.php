@@ -27,6 +27,10 @@ class JobDetailsDB extends Authenticatable
     {
         return $this->belongsTo(JobsDB::class, 'event_id');
     }
+    public function product()
+    {
+        return $this->belongsTo(ProductDB::class, 'id_product');
+    }
     public function closerUser()
     {
         return $this->belongsTo(User::class, 'closer_user_id');

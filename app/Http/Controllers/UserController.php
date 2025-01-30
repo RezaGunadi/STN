@@ -9,6 +9,9 @@ use App\Models\ProductTypeDB;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 
 class UserController extends Controller
@@ -48,9 +51,10 @@ class UserController extends Controller
             $limit = $data['order_priority'];
         }
         $result = User::
-        // take($limit)->skip($startFrom)->
-        orderBy($orderBy, $orderPriority);
+            // take($limit)->skip($startFrom)->
+            orderBy($orderBy, $orderPriority);
 
+        $result = $result->where('role', '!=', 'owner');
         if (array_key_exists('name', $data)) {
             $result = $result->where('name', 'LIKE', '%' . $data['name'] . '%');
         }
@@ -75,16 +79,16 @@ class UserController extends Controller
         $data = $request->all();
         $data['password'] = $data['phone'];
         $registerController = new RegisterController();
-        $result=$registerController->create($data);
+        $result = $registerController->create($data);
         $result->status = $data['status'];
         $result->role = $data['role'];
         $result->Save();
-        return redirect(URL::To('/list-user'));
+        return redirect(URL::To('/list-user'))->with('success', 'Berhasil menambahkan pengguna');
     }
     public function submit(Request $request)
     {
         $data = $request->all();
-        $result= User::where('id',$request->id)->first();
+        $result = User::where('id', $request->id)->first();
         $additionalData = clone $result;
         $additionalData = $additionalData->toArray();
 
@@ -103,38 +107,38 @@ class UserController extends Controller
             $column = 'name';
             $old = $additionalData['name'];
             $new = $data['name'];
-            $history->input($result->id, 'user', 'update', $old,$new, $column ,$additionalData);
+            $history->input($result->id, 'user', 'update', $old, $new, $column, $additionalData);
         }
         if ($data['email'] != $additionalData['email']) {
             $column = 'email';
             $old = $additionalData['email'];
             $new = $data['email'];
-            $history->input($result->id, 'user', 'update', $old,$new, $column ,$additionalData);
+            $history->input($result->id, 'user', 'update', $old, $new, $column, $additionalData);
         }
         if ($data['phone'] != $additionalData['phone']) {
             $column = 'phone';
             $old = $additionalData['phone'];
             $new = $data['phone'];
-            $history->input($result->id, 'user', 'update', $old,$new, $column ,$additionalData);
+            $history->input($result->id, 'user', 'update', $old, $new, $column, $additionalData);
         }
         if ($data['status'] != $additionalData['status']) {
             $column = 'status';
             $old = $additionalData['status'];
             $new = $data['status'];
-            $history->input($result->id, 'user', 'update', $old,$new, $column ,$additionalData);
+            $history->input($result->id, 'user', 'update', $old, $new, $column, $additionalData);
         }
         if ($data['role'] != $additionalData['role']) {
             $column = 'role';
             $old = $additionalData['role'];
             $new = $data['role'];
-            $history->input($result->id, 'user', 'update', $old,$new, $column ,$additionalData);
+            $history->input($result->id, 'user', 'update', $old, $new, $column, $additionalData);
         }
         $result->save();
-        return redirect(URL::To('/list-user'));
+        return redirect(URL::To('/list-user'))->with('success', 'Berhasil mengubah data pengguna');
     }
-    public function edit( $id)
+    public function edit($id)
     {
-        $result= User::where('id',$id)->first();
+        $result = User::where('id', $id)->first();
         return view('page.user.edit', ['data' => $result, 'title' => 'user']);
     }
 
@@ -180,5 +184,68 @@ class UserController extends Controller
         }
         $result = $result . $currectDigit;
         return $result;
+    }
+    function forgotPassword($currectDigit, $key)
+    {
+        try {
+            // if($user->is_email_verified == 1){
+
+
+            $user = User::where('id', Auth::user()->id)->first();
+            Mail::send('email.pass_forgot', ['user' => $user], function ($message) use ($user) {
+                $message->subject("Permintaan reset password");
+                $message->from('no-reply@stn.co.id', 'STN Company');
+                $message->to($user->email);
+            });
+            //  }
+        } catch (\Exception $e) {
+            Log::error("ERROR SEND EMAIL EMAILMODEL" . $e->getMessage() . $e->getLine() . $user->email);
+        }
+        return redirect(URL::To('/'));
+    }
+    public function myProfile()
+    {
+
+        $result = User::where('id', Auth::user()->id)->first();
+        return view('page.profile.show', ['data' => $result, 'title' => 'profile']);
+    }
+    public function changePasswordView()
+    {
+
+        $result = User::where('id', Auth::user()->id)->first();
+        return view('page.profile.change_password', ['data' => $result, 'title' => 'profile']);
+    }
+    public function updateProfile(Request $request)
+    {
+
+        User::where('id', Auth::user()->id)->update($request);
+        return redirect(URL::To('/my-profile'));
+    }
+    public function changePassword(Request $request)
+    {
+        if ($request->old_password) {
+
+            $user = User::where('id', Auth::user()->id)->first();
+            if (!$user) {
+                Auth::logout();
+                return redirect(route('login'))->with('error', 'pengguna tidak di temukan');
+            }
+            if (!Hash::check($request->old_password, $user->password)) {
+                return redirect()->back()->with('error', 'Kata sandi lama salah');
+            }
+        }
+        if ($request->password != $request->confrm_password) {
+            return redirect()->back()->with('error', 'Kata sandi tidak sama');
+        }
+
+        $result = User::where('id', Auth::user()->id)->first();
+        $result->password = Hash::make($request->password);
+        return redirect(URL::To('/my-profile'))->with('success', 'Berhasil mengubah kata sandi');
+    }
+    public function emailTest()
+    {
+
+        $result = User::where('id', Auth::user()->id)->first();
+        return view('email.pass_forgot', ['data' => $result, 'title' => 'profile']);
     }
 }

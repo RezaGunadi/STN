@@ -5,23 +5,24 @@
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center text-body-secondary">
+                <div style="font-weight: 600; color: #000;"
+                    class="card-header d-flex justify-content-between align-items-center text-body-secondary">
                     {{ __('Riwayat Perubahan') }}
 
                     <div>
 
                         {{-- <a class=" btn btn-primary" style="color: white !inportant;"
                             href="{{ URL::To('/input-product') }}" aria-label="Add a new product">
-                            <svg class="bi">
-                                <use xlink:href="#plus-circle" />
-                            </svg>
-                            {{ __('Input') }}
+                        <svg class="bi">
+                            <use xlink:href="#plus-circle" />
+                        </svg>
+                        {{ __('Input') }}
                         </a> --}}
                         <div class=" btn btn-secondary" style="color: white !inportant;" id="filter_btn"
                             aria-label="filterBtn">{{ __('Show Filter') }}
                         </div>
-                        <div class=" btn btn-secondary  d-none" style="color: white !inportant;"
-                            id="filter_btn_hide" aria-label="filter_btn_hide">
+                        <div class=" btn btn-secondary  d-none" style="color: white !inportant;" id="filter_btn_hide"
+                            aria-label="filter_btn_hide">
                             {{-- <svg class="bi">
                                 <use xlink:href="#plus-circle" />
                             </svg> --}}
@@ -45,8 +46,8 @@
 
                                 <div class="mb-3">
                                     <label for="description" class="text-capitalize form-label">description</label>
-                                    <input description="description" class="form-control" id="description" name="description"
-                                        aria-describedby="descriptionHelp">
+                                    <input type="text" class="form-control" id="description"
+                                        name="description" aria-describedby="descriptionHelp">
                                     {{-- <div id="categoryHelp" class="form-text">category</div> --}}
                                 </div>
                             </div>
@@ -54,7 +55,7 @@
 
                                 <div class="mb-3">
                                     <label for="type" class="text-capitalize form-label">type</label>
-                                    <input type="type" class="form-control" id="type" name="type"
+                                    <input type="text" class="form-control" id="type" name="type"
                                         aria-describedby="typeHelp">
                                     {{-- <div id="typeHelp" class="form-text">type</div> --}}
                                 </div>
@@ -75,8 +76,8 @@
                                 <th scope="col-3" style="white-space: nowrap; text-align: center;"
                                     class=" text-capitalize">Type</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class=" text-capitalize">Description</th
-                            </tr>
+                                    class=" text-capitalize">Description</th>
+                                 </tr>
                         </thead>
                         <tbody style="font-weight: 400!important; font-size: 14px;">
                             @foreach ($data as $item)
@@ -96,10 +97,12 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="py-3">
-                    
-                    <div class="col">
-                        {{ $data->links() }}
+                <div class="py-3 mt-3">
+                    <div class="col d-md-block d-none">
+                        {{ $data->onEachSide(1)->links() }}
+                    </div>
+                    <div class="col d-md-none d-sm-block">
+                        {{ $data->onEachSide(0)->links() }}
                     </div>
                 </div>
             </div>

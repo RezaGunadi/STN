@@ -9,7 +9,7 @@
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header">{{ __('Input Product') }}
+                <div class="card-header" style="font-weight: 600; color: #000;">{{ __('Input Product') }}
                 </div>
                 {{-- product_code
 product_name
@@ -43,7 +43,7 @@ consumable --}}
                     </span>
                     @enderror
                 </div> --}}
-                @if (Auth::user()->role == 'admin' || Auth::user()->role == 'ADMIN')
+                @if (Auth::user()->role=='owner' || Auth::user()->role == 'admin' || Auth::user()->role == 'ADMIN')
 
                 <div class="mb-3">
                     <label for="description" class="form-label text-capitalize">description</label>
@@ -115,8 +115,7 @@ consumable --}}
             @endif
             <div class="mb-3">
                 <label for="note" class="form-label text-capitalize">note</label>
-                <input type="text" class="form-control"
-                    value="{{ $data->note }}" id="note" name="note" placeholder="">
+                <input type="text" class="form-control" value="{{ $data->note }}" id="note" name="note" placeholder="">
                 @error('phone')
                 <span class="invalid-feedback" role="alert">
                     <strong>{{ $message }}</strong>

@@ -19,10 +19,11 @@ class Report extends Migration
             $table->text('note');
             $table->integer('reporter_id');
             $table->integer('user_id');
+            $table->bigInteger('price')->default(0);
             $table->integer('created_by');
             $table->text('delete_reason');
-            $table->integer('deleted_by');
-            $table->integer('updated_by');
+            $table->integer('deleted_by')->default(0);
+            $table->integer('updated_by')->default(0);
             $table->timestamps();
             $table->softDeletes();
         });

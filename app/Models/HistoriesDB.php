@@ -31,52 +31,68 @@ class HistoriesDB extends Authenticatable
         $params['ref_type']= $type;
         $params['desc'] = '';
         $unique = '';
-        if ($action =='delete') {
-            if ($type=='product') {
-                $data = ProductDB::where('id', $id)->first();
-                $data->name = $data->product_name;
-
-                $history = new ProductHistoriesDB();
-                $history->input($additionalData);
-            } else if ($type == 'user') {
-                $data = User::where('id', $id)->first();
-
-                $history = new UserHistoriesDB();
-                $history->input($additionalData);
-            }
-            
-            $params['desc'] = $params['desc']. Auth::user()->name+' telah menghapus '.$data->name;
-        } else {
-            if ($type == 'product') {
-                $data = ProductDB::where('id', $id)->first();
-                $data->name = $data->product_name;
-                $unique =$data->product_code;
-
-                $history = new ProductHistoriesDB();
-                $history->input($additionalData);
-                $params['desc'] = $params['desc']. Auth::user()->name.' telah mengubah '. $unique.', kolom '.$colom.' dari '.$old.' menjadi '. $new;
-            } else if ($type == 'user') {
-                $data = User::where('id', $id)->first();
-                $unique =$data->email;
+        try {
+            //code...
+            if ($action =='delete') {
+                if ($type=='product') {
+                    $data = ProductDB::where('id', $id)->first();
+                    $data->name = $data->product_name;
+    
+                    $history = new ProductHistoriesDB();
+                    $history->input($additionalData);
+                } else if ($type == 'user') {
+                    $data = User::where('id', $id)->first();
+    
+                    $history = new UserHistoriesDB();
+                    $history->input($additionalData);
+                }
                 
-                $history = new UserHistoriesDB();
-                $history->input($additionalData);
-                $params['desc'] = $params['desc']. Auth::user()->name.' telah mengubah '. $unique.', kolom '.$colom.' dari '.$old.' menjadi '. $new;
-            }
-            else if ($type == 'event') {
-                $data = JobsDB::where('id',$id)->first();
-                // $unique = $data->event_name;
+                $params['desc'] = $params['desc']. Auth::user()->name+' telah menghapus '.$data->name;
+            } else {
+                if ($type == 'product') {
+                    $data = ProductDB::where('id', $id)->first();
+                    $data->name = $data->product_name;
+                    $unique =$data->product_code;
+    
+                    $history = new ProductHistoriesDB();
+                    $history->input($additionalData);
+                    $params['desc'] = $params['desc']. Auth::user()->name.' telah mengubah '. $unique.', kolom '.$colom.' dari '.$old.' menjadi '. $new;
+                } else if ($type == 'user') {
+                    $data = User::where('id', $id)->first();
+                    $unique =$data->email;
+                    
+                    $history = new UserHistoriesDB();
+                    $history->input($additionalData);
+                    $params['desc'] = $params['desc']. Auth::user()->name.' telah mengubah '. $unique.', kolom '.$colom.' dari '.$old.' menjadi '. $new;
+                }
+                else if ($type == 'event') {
+                    $data = JobsDB::where('id',$id)->first();
+                    $unique = $data->event_name;
+    
+                    $history = new JobHistoryDB();
+                    $additionalData['created_by']=Auth::user()->id;
+                    $additionalData['updated_by']=Auth::user()->id;
+                    $additionalData['deleted_by']=0;
+                    $history->input($additionalData);
+                    $params['desc'] = $params['desc'] . Auth::user()->name . ' telah mengubah ' . $unique . ', kolom ' . $colom . ' dari ' . $old . ' menjadi ' . $new;
+                }
+                else if ($type == 'event_detail') {
+                    $data = JobDetailsDB::where('id',$id)->first();
+                    // $unique = $data->event_name;
 
-                $history = new JobHistoryDB();
-                $history->input($additionalData);
+                    $params['ref_type'] = 'Detail Event';
+                    $history = new JobDetailHistoryDB();
+                    $additionalData['job_detail_id']=$data->id;
+                    $additionalData['created_by']=Auth::user()->id;
+                    $additionalData['updated_by']=Auth::user()->id;
+                    $additionalData['deleted_by']=0;
+                    $history->input($additionalData);
+                    $params['desc'] = $params['desc'] . Auth::user()->name . ' telah menambah ' . $data->product->code . ' ke ' . $data->event->event_name ;
+                }
             }
-            else if ($type == 'event_detail') {
-                $data = JobsDB::where('id',$id)->first();
-                // $unique = $data->event_name;
-
-                $history = new JobDetailHistoryDB();
-                $history->input($additionalData);
-            }
+        } catch (\Throwable $th) {
+            //throw $th;
+            dd($th->getMessage().' || '.$th->getLine());
         }
         
         return HistoriesDB::create($params);

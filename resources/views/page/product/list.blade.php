@@ -1,11 +1,16 @@
 @extends('layouts.index')
+@push('css')
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+<link rel="stylesheet" href="/resources/demos/style.css">
 
+@endpush
 @section('content')
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center text-body-secondary">
+                <div style="font-weight: 600; color: #000;"
+                    class="card-header d-flex justify-content-between align-items-center text-body-secondary">
                     {{ __('List Product') }}
 
                     <div>
@@ -20,8 +25,8 @@
                         <div class=" btn btn-secondary" style="color: white !inportant;" id="filter_btn"
                             aria-label="filterBtn">{{ __('Show Filter') }}
                         </div>
-                        <div class=" btn btn-secondary  d-none" style="color: white !inportant;"
-                            id="filter_btn_hide" aria-label="filter_btn_hide">
+                        <div class=" btn btn-secondary  d-none" style="color: white !inportant;" id="filter_btn_hide"
+                            aria-label="filter_btn_hide">
                             {{-- <svg class="bi">
                                 <use xlink:href="#plus-circle" />
                             </svg> --}}
@@ -45,7 +50,7 @@
 
                                 <div class="mb-3">
                                     <label for="category" class="text-capitalize form-label">category</label>
-                                    <input type="category" class="form-control" id="category" name="category"
+                                    <input type="text" class="form-control" id="category" name="category"
                                         aria-describedby="categoryHelp">
                                     {{-- <div id="categoryHelp" class="form-text">category</div> --}}
                                 </div>
@@ -54,7 +59,7 @@
 
                                 <div class="mb-3">
                                     <label for="type" class="text-capitalize form-label">type</label>
-                                    <input type="type" class="form-control" id="type" name="type"
+                                    <input type="text" class="form-control" id="type" name="type"
                                         aria-describedby="typeHelp">
                                     {{-- <div id="typeHelp" class="form-text">type</div> --}}
                                 </div>
@@ -63,7 +68,7 @@
 
                                 <div class="mb-3">
                                     <label for="brand" class="text-capitalize form-label">brand</label>
-                                    <input type="brand" class="form-control" id="brand" name="brand"
+                                    <input type="text" class="form-control" id="brand" name="brand"
                                         aria-describedby="brandHelp">
                                     {{-- <div id="brandHelp" class="form-text">brand</div> --}}
                                 </div>
@@ -72,8 +77,8 @@
 
                                 <div class="mb-3">
                                     <label for="product_code" class="text-capitalize form-label">product code</label>
-                                    <input type="product_code" class="form-control" id="product_code"
-                                        name="product_code" aria-describedby="product_codeHelp">
+                                    <input type="text" class="form-control" id="product_code" name="product_code"
+                                        aria-describedby="product_codeHelp">
                                     {{-- <div id="product_codeHelp" class="form-text">product_code</div> --}}
                                 </div>
                             </div>
@@ -81,8 +86,8 @@
 
                                 <div class="mb-3">
                                     <label for="product_name" class="text-capitalize form-label">product name</label>
-                                    <input type="product_name" class="form-control" id="product_name"
-                                        name="product_name" aria-describedby="product_nameHelp">
+                                    <input type="text" class="form-control" id="product_name" name="product_name"
+                                        aria-describedby="product_nameHelp">
                                     {{-- <div id="product_nameHelp" class="form-text">product_name</div> --}}
                                 </div>
                             </div>
@@ -90,8 +95,10 @@
 
                                 <div class="mb-3">
                                     <label for="payment_date" class="text-capitalize form-label">payment date</label>
-                                    <input type="payment_date" class="form-control" id="payment_date"
-                                        name="payment_date" aria-describedby="payment_dateHelp">
+                                    <input type="text" class="form-control" id="payment_date" name="payment_date"
+                                        aria-describedby="payment_dateHelp">
+                                        {{-- <label for="date" class="form-label text-capitalize">payment Date</label>
+                                        <input type="text" class="form-control @error('date') is-invalid @enderror" required name="date" id="date"> --}}
                                     {{-- <div id="product_nameHelp" class="form-text">product_name</div> --}}
                                 </div>
                             </div>
@@ -145,8 +152,8 @@
                                     class=" text-capitalize">description</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
                                     class=" text-capitalize">payment date</th>
-                                <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class=" text-capitalize">purpose used</th>
+                                {{-- <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class=" text-capitalize">purpose used</th> --}}
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
                                     class=" text-capitalize">price</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
@@ -196,9 +203,9 @@
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
                                     {{ $item->payment_date }}</th>
-                                <th scope="col" style="text-align: center;font-weight: 400!important;"
+                                {{-- <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
-                                    {{ $item->purpose_used }}</th>
+                                    {{ $item->purpose_used }}</th> --}}
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">{{ $item->price }}
                                 </th>
@@ -207,7 +214,11 @@
                                 </th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
-                                    {{ $item->event_location }}</th>
+
+                                    @if ($item->event_id!=0)
+
+                                    {{ $item->eventDetail->event_name }}
+                                    @endif</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
                                     {{ $item->storage_location }}</th>
@@ -238,11 +249,12 @@
                                 </th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
-                                    @if (Auth::user()->role=='admin' ||Auth::user()->role=='staff gudang')
-                                        
+                                    @if (Auth::user()->role=='owner' || Auth::user()->role=='admin'
+                                    ||Auth::user()->role=='staff gudang')
+
                                     <a href="{{ route('edit_product',['id' => $item->product_code]) }}">
 
-                                        <button class="btn btn-secondary" >
+                                        <button class="btn btn-secondary">
                                             edit
                                         </button>
                                     </a>
@@ -250,10 +262,11 @@
                                     <button class="btn btn-secondary no-access">
                                         edit
                                     </button>
-                                        
+
                                     @endif
-                                    @if (Auth::user()->role=='admin' ||Auth::user()->role=='staff gudang')
-                                        
+                                    @if (Auth::user()->role=='owner' || Auth::user()->role=='admin'
+                                    ||Auth::user()->role=='staff gudang')
+
                                     <a href="{{ URL::To('/generate-qr?qr='.$item->qr_string) }}">
 
                                         <button class="btn btn-primary my-2 mx-2" style="white-space: nowrap">
@@ -264,7 +277,7 @@
                                     <button class="btn btn-primary no-access my-2 mx-2" style="white-space: nowrap">
                                         Download QR
                                     </button>
-                                        
+
                                     @endif
                                 </th>
                             </tr>
@@ -272,10 +285,13 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="py-3">
-                    
-                    <div class="col">
-                        {{ $data->links() }}
+                <div class="py-3 mt-3">
+
+                    <div class="col d-md-block d-none">
+                        {{ $data->onEachSide(1)->links() }}
+                    </div>
+                    <div class="col d-md-none d-sm-block">
+                        {{ $data->onEachSide(0)->links() }}
                     </div>
                 </div>
             </div>
@@ -287,16 +303,8 @@
 
 @push('script')
 <script>
-    // $(document).ready(function() { 
-    // $( ".no-access" ).click(function() {
-    // alert( "anda tidak memiliki hak akses" );
-    // });
-    // // $(document).ready(function() { 
-    // //     $("#filter_btn").click(function () {
-    // //         alert("Hello!");
-    // //     // $(".hide_div").hide();
-    // //     });
-    // });
+    $( function() {
+        $( "#payment_date" ).datepicker();
+      } );
 </script>
-{{-- filterBtn filterForm --}}
 @endpush

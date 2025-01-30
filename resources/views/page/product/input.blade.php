@@ -9,7 +9,7 @@
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header">{{ __('Input Product') }}
+                <div class="card-header" style="font-weight: 600; color: #000;">{{ __('Input Product') }}
                 </div>
                 {{-- product_code
 product_name
@@ -26,7 +26,7 @@ consumable --}}
                 <div class="card-body">
                     <form action="{{ route('submit_product') }}" method="POST">
                         @csrf
-                        <div class="mb-3">
+                        <div class="mb-3" id="code_section">
                             <label for="code" class="form-label text-capitalize">Code</label>
                             <input type="text" class="form-control" id="code" name="code"
                                 placeholder="Kosongkan Untuk Auto Generate">
@@ -96,6 +96,7 @@ consumable --}}
                             </span>
                             @enderror
                         </div>
+                        <label for="status" class="form-label text-capitalize">Condition</label>
                         <select class="form-select form-select-lg mb-3" id="status" name="status" aria-label="Status">
                             {{-- <option selected>Status</option> --}}
                             <option value="Good">Good</option>
@@ -108,6 +109,29 @@ consumable --}}
                             <label class="form-check-label" for="consumable">
                                 Is Consumable
                             </label>
+                        </div>
+                        <div style="font-weight: 500; font-size: 16px; pt-3">
+                            Jumlah Barang
+                            <i id="minus" style="font-size: 24px; color: rgb(244, 177, 190);"
+                                class="mx-3 bi bi-dash-circle"></i>
+                            <input type="hidden" value="1" name="total_input_item" id="total_input_item">
+                            <div id="total_value" class="px-3 d-inline ms-3">
+                                1
+                            </div>
+                            
+                            <i id="plus" style="font-size: 24px; color: rgb(244, 177, 190);"
+                                class="mx-3 bi bi-plus-circle"></i>
+                        </div>
+                        <div id="info" class="d-none my-3"
+                            style="background-color: rgb(244, 177, 190); border-radius: 8px;">
+                            <div class="d-inline-block pb-3">
+
+                                <i class="bi bi-info-square-fill px-3 py-3"></i>
+                            </div>
+                            <div class="d-inline px-3 pt-1" style="font-weight: 600;">
+                                Kode produk akan di buat otomatis apabila Menambahkan lebih dari 1 produk dalam satu
+                                kali input.
+                            </div>
                         </div>
                         <button class="btn btn-primary text-capitalize mt-5 w-100" id="inputData" type="submit">
                             submit
@@ -124,5 +148,37 @@ consumable --}}
     $( function() {
         $( "#date" ).datepicker();
       } );
+</script>
+<script type="text/javascript">
+    var x=1;
+    $('#plus').click(function (e) {
+        e.preventDefault();
+        x=x+1;
+        document.getElementById("total_input_item").setAttribute('value',x);
+        if (x>1) {
+        
+            $("#info").removeClass("d-none");
+            $("#info").addClass("d-block");
+            $("#total_value").html(' '+x+' ');
+            $("#code_section").addClass("d-none");
+            $("#code_section").removeClass("d-block");
+        }
+    });
+    $('#minus').click(function (e) {
+        e.preventDefault();
+        x=x-1;
+        document.getElementById("total_input_item").value=""+x+"";
+        $("#total_value").html(' '+x+' ');
+        if (x<1) { 
+            x==1; 
+        }
+        if (x==1) { 
+                $("#code_section").removeClass("d-none");
+                $("#code_section").addClass("d-block"); 
+                $("#info").addClass("d-none"); 
+                $("#info").removeClass("d-block");
+        } 
+    });
+    
 </script>
 @endpush

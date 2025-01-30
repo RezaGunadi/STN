@@ -17,8 +17,8 @@ class UserHistories extends Migration
             $table->id();
             $table->string('user_id');
             $table->string('name');
-            $table->string('phone')->nullable()->unique();
-            $table->string('email')->unique();
+            $table->string('phone')->nullable();
+            $table->string('email');
             $table->string('role')->default('');
             $table->string('status')->default('inacive');
             $table->integer('total_kerugian')->default(0);

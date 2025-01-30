@@ -13,7 +13,7 @@
 
                         <a class=" btn btn-primary" style="color: white !inportant;"
                             href="{{ URL::To('/input-product') }}" aria-label="Add a new product">
-                            <i class="bi bi-plus-circle"></i>
+                            <i class="bi bi-plus-circle pe-2"></i>
                             {{ __('Input') }}
                         </a>
                         <div class=" btn btn-secondary" style="color: white !inportant;" id="filter_btn"
@@ -21,7 +21,7 @@
                         </div>
                         <div class=" btn btn-secondary  d-none" style="color: white !inportant;" id="filter_btn_hide"
                             aria-label="filter_btn_hide">
-                            {{-- <i class="bi bi-plus-circle"></i> --}}
+                            {{-- <i class="bi bi-plus-circle pe-2"></i> --}}
                             {{ __('Hide Filter') }}
                         </div>
                     </div>

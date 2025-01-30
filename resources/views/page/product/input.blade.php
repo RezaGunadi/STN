@@ -124,7 +124,7 @@ consumable --}}
                         </div>
                         <div id="info" class="d-none my-3"
                             style="background-color: rgb(244, 177, 190); border-radius: 8px;">
-                            <div class="d-inline-block pb-">
+                            <div class="d-inline-block pb-2">
 
                                 <i class="bi bi-info-square-fill px-3 py-3"></i>
                             </div>

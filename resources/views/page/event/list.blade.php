@@ -13,9 +13,7 @@
 
                         <a class=" btn btn-primary" style="color: white !inportant;"
                             href="{{ URL::To('/input-event') }}" aria-label="Add event">
-                            <svg class="bi">
-                                <use xlink:href="#plus-circle" />
-                            </svg>
+                            <i class="bi bi-plus-circle"></i>
                             {{ __('Add') }}
                         </a>
                         <div class=" btn btn-secondary" style="color: white !inportant;" id="filter_btn"
@@ -23,9 +21,7 @@
                         </div>
                         <div class=" btn btn-secondary  d-none" style="color: white !inportant;" id="filter_btn_hide"
                             aria-label="filter_btn_hide">
-                            {{-- <svg class="bi">
-                                <use xlink:href="#plus-circle" />
-                            </svg> --}}
+                            {{-- <i class="bi bi-plus-circle"></i> --}}
                             {{ __('Hide Filter') }}
                         </div>
                     </div>
@@ -206,34 +202,34 @@
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
                                     @if ($item->finish_date==null||$item->finish_date=='')
-                                        
-                                        @if (Auth::user()->role=='owner' || Auth::user()->role=='staff')
-                                            @if (Auth::user()->id == $item->created_by)
 
-                                                <a href="{{ route('edit_event',['id' => $item->id]) }}">
+                                    @if (Auth::user()->role=='owner' || Auth::user()->role=='staff')
+                                    @if (Auth::user()->id == $item->created_by)
 
-                                                    <button class="btn btn-secondary">
-                                                        Edit
-                                                    </button>
-                                                </a>
-                                            @endif
+                                    <a href="{{ route('edit_event',['id' => $item->id]) }}">
 
-                                                <a href="{{ route('close_event_detail',['id' => $item->id]) }}">
+                                        <button class="btn btn-secondary">
+                                            Edit
+                                        </button>
+                                    </a>
+                                    @endif
 
-                                                    <button class="btn btn-secondary">
-                                                        Selesaikan
-                                                    </button>
-                                                </a>
-                                        @else
-                                            <button class="btn btn-secondary no-access">
-                                                edit
-                                            </button>
+                                    <a href="{{ route('close_event_detail',['id' => $item->id]) }}">
 
-                                        @endif
+                                        <button class="btn btn-secondary">
+                                            Selesaikan
+                                        </button>
+                                    </a>
+                                    @else
+                                    <button class="btn btn-secondary no-access">
+                                        edit
+                                    </button>
+
+                                    @endif
                                     @endif
 
 
-                                        
+
                                     @if (Auth::user()->role=='owner' || Auth::user()->role=='admin'
                                     ||Auth::user()->role=='staff')
 

@@ -23,9 +23,7 @@
                         </div>
                         <div class=" btn btn-secondary  d-none" style="color: white !inportant;" id="filter_btn_hide"
                             aria-label="filter_btn_hide">
-                            {{-- <svg class="bi">
-                                <use xlink:href="#plus-circle" />
-                            </svg> --}}
+                            {{-- <i class="bi bi-plus-circle"></i> --}}
                             {{ __('Hide Filter') }}
                         </div>
                     </div>
@@ -46,8 +44,8 @@
 
                                 <div class="mb-3">
                                     <label for="description" class="text-capitalize form-label">description</label>
-                                    <input type="text" class="form-control" id="description"
-                                        name="description" aria-describedby="descriptionHelp">
+                                    <input type="text" class="form-control" id="description" name="description"
+                                        aria-describedby="descriptionHelp">
                                     {{-- <div id="categoryHelp" class="form-text">category</div> --}}
                                 </div>
                             </div>
@@ -77,7 +75,7 @@
                                     class=" text-capitalize">Type</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
                                     class=" text-capitalize">Description</th>
-                                 </tr>
+                            </tr>
                         </thead>
                         <tbody style="font-weight: 400!important; font-size: 14px;">
                             @foreach ($data as $item)

@@ -28,9 +28,7 @@ job --}}
                         </div>
                         <div class=" btn btn-secondary  d-none" style="color: white !inportant;" id="filter_btn_hide"
                             aria-label="filter_btn_hide">
-                            {{-- <svg class="bi">
-                                <use xlink:href="#plus-circle" />
-                            </svg> --}}
+                            {{-- <i class="bi bi-plus-circle"></i> --}}
                             {{ __('Hide Filter') }}
                         </div>
                     </div>

@@ -13,9 +13,7 @@
 
                         <a class=" btn btn-primary" style="color: white !inportant;"
                             href="{{ URL::To('/input-event') }}" aria-label="Add event">
-                            <svg class="bi">
-                                <use xlink:href="#plus-circle" />
-                            </svg>
+                            <i class="bi bi-plus-circle"></i>
                             {{ __('Add') }}
                         </a>
                         <div class=" btn btn-secondary" style="color: white !inportant;" id="filter_btn"
@@ -23,9 +21,7 @@
                         </div>
                         <div class=" btn btn-secondary  d-none" style="color: white !inportant;" id="filter_btn_hide"
                             aria-label="filter_btn_hide">
-                            {{-- <svg class="bi">
-                                <use xlink:href="#plus-circle" />
-                            </svg> --}}
+                            {{-- <i class="bi bi-plus-circle"></i> --}}
                             {{ __('Hide Filter') }}
                         </div>
                     </div>
@@ -56,8 +52,8 @@
                                 <div class="mb-3">
                                     <label for="event_location" class="text-capitalize form-label">event
                                         location</label>
-                                    <input type="text" class="form-control" id="event_location"
-                                        name="event_location" aria-describedby="event_locationHelp">
+                                    <input type="text" class="form-control" id="event_location" name="event_location"
+                                        aria-describedby="event_locationHelp">
                                     {{-- <div id="categoryHelp" class="form-text">category</div> --}}
                                 </div>
                             </div>
@@ -65,8 +61,8 @@
 
                                 <div class="mb-3">
                                     <label for="starter_user" class="text-capitalize form-label">starter user</label>
-                                    <input type="text" class="form-control" id="starter_user"
-                                        name="starter_user" aria-describedby="starter_userHelp">
+                                    <input type="text" class="form-control" id="starter_user" name="starter_user"
+                                        aria-describedby="starter_userHelp">
                                     {{-- <div id="categoryHelp" class="form-text">category</div> --}}
                                 </div>
                             </div>

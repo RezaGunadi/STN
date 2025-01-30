@@ -23,9 +23,7 @@
                         </div>
                         <div class=" btn btn-secondary  d-none" style="color: white !inportant;" id="filter_btn_hide"
                             aria-label="filter_btn_hide">
-                            {{-- <svg class="bi">
-                                <use xlink:href="#plus-circle" />
-                            </svg> --}}
+                            {{-- <i class="bi bi-plus-circle"></i> --}}
                             {{ __('Hide Filter') }}
                         </div>
                     </div>
@@ -73,8 +71,8 @@
 
                                 <div class="mb-3">
                                     <label for="product_code" class="text-capitalize form-label">product code</label>
-                                    <input type="text" class="form-control" id="product_code"
-                                        name="product_code" aria-describedby="product_codeHelp">
+                                    <input type="text" class="form-control" id="product_code" name="product_code"
+                                        aria-describedby="product_codeHelp">
                                     {{-- <div id="product_codeHelp" class="form-text">product_code</div> --}}
                                 </div>
                             </div>
@@ -82,8 +80,8 @@
 
                                 <div class="mb-3">
                                     <label for="product_name" class="text-capitalize form-label">product name</label>
-                                    <input type="text" class="form-control" id="product_name"
-                                        name="product_name" aria-describedby="product_nameHelp">
+                                    <input type="text" class="form-control" id="product_name" name="product_name"
+                                        aria-describedby="product_nameHelp">
                                     {{-- <div id="product_nameHelp" class="form-text">product_name</div> --}}
                                 </div>
                             </div>
@@ -91,8 +89,8 @@
 
                                 <div class="mb-3">
                                     <label for="payment_date" class="text-capitalize form-label">payment date</label>
-                                    <input type="text" class="form-control" id="payment_date"
-                                        name="payment_date" aria-describedby="payment_dateHelp">
+                                    <input type="text" class="form-control" id="payment_date" name="payment_date"
+                                        aria-describedby="payment_dateHelp">
                                     {{-- <div id="product_nameHelp" class="form-text">product_name</div> --}}
                                 </div>
                             </div>

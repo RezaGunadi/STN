@@ -17,9 +17,7 @@
 
                         <a class=" btn btn-primary" style="color: white !inportant;"
                             href="{{ URL::To('/input-product') }}" aria-label="Add a new product">
-                            <svg class="bi">
-                                <use xlink:href="#plus-circle" />
-                            </svg>
+                            <i class="bi bi-plus-circle"></i>
                             {{ __('Input') }}
                         </a>
                         <div class=" btn btn-secondary" style="color: white !inportant;" id="filter_btn"
@@ -27,9 +25,7 @@
                         </div>
                         <div class=" btn btn-secondary  d-none" style="color: white !inportant;" id="filter_btn_hide"
                             aria-label="filter_btn_hide">
-                            {{-- <svg class="bi">
-                                <use xlink:href="#plus-circle" />
-                            </svg> --}}
+                            {{-- <i class="bi bi-plus-circle"></i> --}}
                             {{ __('Hide Filter') }}
                         </div>
                     </div>
@@ -97,7 +93,7 @@
                                     <label for="payment_date" class="text-capitalize form-label">payment date</label>
                                     <input type="text" class="form-control" id="payment_date" name="payment_date"
                                         aria-describedby="payment_dateHelp">
-                                        {{-- <label for="date" class="form-label text-capitalize">payment Date</label>
+                                    {{-- <label for="date" class="form-label text-capitalize">payment Date</label>
                                         <input type="text" class="form-control @error('date') is-invalid @enderror" required name="date" id="date"> --}}
                                     {{-- <div id="product_nameHelp" class="form-text">product_name</div> --}}
                                 </div>

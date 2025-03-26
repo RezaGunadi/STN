@@ -13,23 +13,41 @@
                     class="card-header d-flex justify-content-between align-items-center text-body-secondary">
                     {{ __('List Product') }}
 
-                    <div>
+                    <div class="row">
 
-                        <a class=" btn btn-primary" style="color: white !inportant;"
-                            href="{{ URL::To('/input-product') }}" aria-label="Add a new product">
-                            <div class="pe-2 d-inline-block">
+                        <div class="col-auto px-2">
 
-                                <i class="bi bi-plus-circle"></i>
-                            </div>
-                            {{ __('Input') }}
-                        </a>
-                        <div class=" btn btn-secondary" style="color: white !inportant;" id="filter_btn"
-                            aria-label="filterBtn">{{ __('Show Filter') }}
+                            <a class=" btn btn-primary" style="color: white !inportant;"
+                                href="{{ URL::To('/input-product') }}" aria-label="Add a new product">
+                                <div class="pe-2 d-inline-block">
+    
+                                    <i class="bi bi-plus-circle"></i>
+                                </div>
+                                {{ __('Input') }}
+                            </a>
                         </div>
-                        <div class=" btn btn-secondary  d-none" style="color: white !inportant;" id="filter_btn_hide"
-                            aria-label="filter_btn_hide">
-                            {{-- <i class="bi bi-plus-circle"></i> --}}
-                            {{ __('Hide Filter') }}
+                        <div class="col-auto px-2">
+
+                            <div class=" btn btn-secondary" style="color: white !inportant;" id="filter_btn"
+                                aria-label="filterBtn">{{ __('Show Filter') }}
+                            </div>
+                            <div class=" btn btn-secondary  d-none" style="color: white !inportant;" id="filter_btn_hide"
+                                aria-label="filter_btn_hide">
+                                {{-- <i class="bi bi-plus-circle"></i> --}}
+                                {{ __('Hide Filter') }}
+                            </div>
+                        </div>
+                        <div class="col-auto px-2">
+
+                            <a style="color: #000; font-weight: 400"  style="color: #0b2b2b" class="nav-link d-flex align-items-center gap-2"
+                                href="{{ URL::To('/list-management-product') }}">
+                            <button class="btn btn-link py-2">
+    
+                                    <div class="d-inline-block pe-2 pb-2">
+                                        <i class="bi bi-gear-fill"></i>
+                                    </div>
+                                </button>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -154,9 +172,13 @@
                                 {{-- <th scope="col" style="white-space: nowrap; text-align: center;"
                                     class=" text-capitalize">purpose used</th> --}}
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class=" text-capitalize">price</th>
+                                    class=" text-capitalize">purchase price</th>
+                                <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class=" text-capitalize">rental price</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
                                     class=" text-capitalize">status</th>
+                                <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class=" text-capitalize">Group</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
                                     class=" text-capitalize">event location</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
@@ -209,8 +231,32 @@
                                     class=" text-capitalize">{{ $item->price }}
                                 </th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
+                                    class=" text-capitalize">{{ $item->rental_price }}
+                                </th>
+                                <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">{{ $item->status }}
                                 </th>
+                                <th scope="col" style="text-align: center;font-weight: 400!important; white-space: nowrap;"
+                                    class=" text-capitalize">
+
+                                    @if ($item->team_id!=0)
+
+                                    {{-- {{ $item->eventDetail->event_name }} --}}
+                                    {{-- {{ $item->getTeam }} --}}
+                                    @php
+                                        $countUser=0;
+                                    @endphp
+                                    @foreach ($item->getTeam as $user)
+                                    @if ($countUser>0)
+                                        <br>
+                                    @endif
+                                    @php
+                                        $countUser++;
+                                    @endphp
+                                        {{ $user->user->name  }} 
+                                        {{-- ({{ $user->user->email }}) --}}
+                                    @endforeach
+                                    @endif</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
 
@@ -247,18 +293,18 @@
                                     @endphp
                                 </th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
-                                    class=" text-capitalize">
+                                    class="text-capitalize">
                                     @if (Auth::user()->role=='owner' || Auth::user()->role=='admin'
                                     ||Auth::user()->role=='staff gudang')
 
                                     <a href="{{ route('edit_product',['id' => $item->product_code]) }}">
 
-                                        <button class="btn btn-secondary">
+                                        <button class="text-capitalize btn btn-secondary">
                                             edit
                                         </button>
                                     </a>
                                     @else
-                                    <button class="btn btn-secondary no-access">
+                                    <button class="text-capitalize btn btn-secondary no-access">
                                         edit
                                     </button>
 

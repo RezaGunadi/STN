@@ -26,12 +26,15 @@ class Product extends Migration
             $table->date('payment_date');
             $table->string('purpose_used')->nullable();
             $table->bigInteger('price');
+            $table->bigInteger('purchase_price');
+            $table->bigInteger('rental_price');
             $table->string('status');
             $table->bigInteger('event_id')->default(0);
             $table->text('storage_location')->nullable();
             $table->integer('is_available')->default(1);
             $table->text('note')->nullable();
             $table->integer('user_id')->default(0);
+            $table->integer('team_id')->default(0);
             $table->string('qr_string');
             $table->integer('is_consumable')->default(0);
             $table->text('remarks')->nullable();

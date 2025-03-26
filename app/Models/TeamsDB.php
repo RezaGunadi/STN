@@ -7,13 +7,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\HasApiTokens;
 
-class ProductDB extends Authenticatable
+class TeamsDB extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
-    protected $table = 'product';
+    protected $table = 'teams';
     /**
      * The attributes that are mass assignable.
      *
@@ -23,25 +24,8 @@ class ProductDB extends Authenticatable
         'id',
     ];
 
-
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
-    }
-    public function deletedUser()
-    {
-        return $this->belongsTo(User::class, 'deleted_by');
-    }
-    public function updatedUser()
-    {
-        return $this->belongsTo(User::class, 'updated_by');
-    }
-    public function eventDetail()
-    {
-        return $this->belongsTo(JobsDB::class, 'event_id');
-    }
-    public function getTeam()
-    {
-        return $this->hasMany(TeamsDB::class, 'group_id', 'team_id' );
     }
 }

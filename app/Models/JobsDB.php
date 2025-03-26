@@ -37,4 +37,12 @@ class JobsDB extends Authenticatable
     {
         return $this->belongsTo(JobHistoryDB::class, 'job_id');
     }
+    public function staterTeam()
+    {
+        return $this->hasMany(TeamsDB::class, 'starter_team_id');
+    }
+    public function closerTeam()
+    {
+        return $this->hasMany(TeamsDB::class, 'closer_team_id','group_id');
+    }
 }

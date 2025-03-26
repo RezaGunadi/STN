@@ -19,6 +19,10 @@ class JobDetailHistories extends Migration
             // $table->integer('closer_user_id');
             $table->bigInteger('job_detail_id');
             $table->bigInteger('id_product');
+            $table->integer('total_price')->default(0);
+            $table->integer('price_before_discount')->default(0);
+            $table->integer('discount')->default(0);
+            $table->integer('additional_price')->default(0);
             $table->string('lat_user');
             $table->string('lng_user');
             $table->bigInteger('event_id');

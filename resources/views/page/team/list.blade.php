@@ -95,7 +95,7 @@
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
                                     class=" text-capitalize">name</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class=" text-capitalize">email</th>
+                                    class=" text-capitalize">emai</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
                                     class=" text-capitalize">phone</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
@@ -118,20 +118,10 @@
                                     {{ $item->name }}</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
-                                    @if (Auth::user()->role =='admin' || Auth::user()->role =='owner')
-                                    {{ $item->email }}
-                                        @else
-                                        XXXXXXXXX@XXXX.XXX
-                                    @endif
-                                </th>
+                                    {{ $item->emai }}</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
-                                    @if (Auth::user()->role =='admin' || Auth::user()->role =='owner')
-                                    {{ $item->phone }}
-                                    @else
-                                    XXXXXX
-                                    @endif
-                                </th>
+                                    {{ $item->phone }}</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
                                     {{ $item->role }}</th>
@@ -144,12 +134,12 @@
 
                                     <a href="{{ route('edit_user',['id' => $item->id]) }}">
 
-                                        <button class="text-capitalize btn btn-secondary">
+                                        <button class="btn btn-secondary">
                                             edit
                                         </button>
                                     </a>
                                     @else
-                                    <button class="text-capitalize btn btn-secondary no-access">
+                                    <button class="btn btn-secondary no-access">
                                         edit
                                     </button>
 

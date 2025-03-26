@@ -39,7 +39,14 @@
                 {{-- {{ __('You are logged in!') }} --}}
                 <form action="{{ route('list_history') }}" method="GET" id="filterForm" class="d-none">
                     <div class="mb-5">
-                        <div class="row">
+                        <div class="row"><div class="col-md-6">
+                        
+                            <div class="mb-3">
+                                <label for="type" class="text-capitalize form-label">type</label>
+                                <input type="text" class="form-control" id="type" name="type" aria-describedby="typeHelp">
+                                {{-- <div id="typeHelp" class="form-text">type</div> --}}
+                            </div>
+                        </div>
                             <div class="col-md-6">
 
                                 <div class="mb-3">
@@ -47,15 +54,6 @@
                                     <input type="text" class="form-control" id="description" name="description"
                                         aria-describedby="descriptionHelp">
                                     {{-- <div id="categoryHelp" class="form-text">category</div> --}}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-
-                                <div class="mb-3">
-                                    <label for="type" class="text-capitalize form-label">type</label>
-                                    <input type="text" class="form-control" id="type" name="type"
-                                        aria-describedby="typeHelp">
-                                    {{-- <div id="typeHelp" class="form-text">type</div> --}}
                                 </div>
                             </div>
 
@@ -89,7 +87,7 @@
                                     {{ $item->ref_type }}</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
-                                    {{ $item->desc }}</th>
+                                   {{ $item->user->name }} {{ $item->desc }}</th>
                             </tr>
                             @endforeach
                         </tbody>

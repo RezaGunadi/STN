@@ -92,8 +92,18 @@ consumable --}}
             </div> --}}
             <div class="mb-3">
                 <label for="price" class="form-label text-capitalize">Price</label>
-                <input type="text" class="form-control @error('price') is-invalid @enderror" required
+                <input type="number" onkeyup="oneDot(this)" class="form-control @error('price') is-invalid @enderror" required
                     value="{{ $data->price }}" id="price" name="price" placeholder="100000">
+                @error('phone')
+                <span class="invalid-feedback" role="alert">
+                    <strong>{{ $message }}</strong>
+                </span>
+                @enderror
+            </div>
+            <div class="mb-3">
+                <label for="rental_price" class="form-label text-capitalize">Rental Price</label>
+                <input type="number" onkeyup="oneDot(this)" class="form-control @error('rental_price') is-invalid @enderror" required id="rental_price"
+                    name="rental_price" placeholder="100000">
                 @error('phone')
                 <span class="invalid-feedback" role="alert">
                     <strong>{{ $message }}</strong>

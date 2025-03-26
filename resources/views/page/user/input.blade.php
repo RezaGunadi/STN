@@ -37,18 +37,19 @@ consumable --}}
                         <div class="mb-3">
                             <label for="email" class="form-label text-capitalize">email</label>
                             <input type="text" class="form-control" id="email" name="email" placeholder="email">
-                        </div>
+                        </div><label for="role" class="form-label text-capitalize">role</label>
                         <select class="form-select form-select-lg mb-3" id="role" name="role" aria-label="role">
                             {{-- <option selected>Status</option> --}}
-                            <option class="text-capitalize" value="admin">admin</option>
+                            <option class="text-capitalize" value="admin">Admin</option>
                             <option class="text-capitalize" value="staff gudang">Staff Gudang</option>
                             <option class="text-capitalize" value="staff">Staff</option>
+                            <option class="text-capitalize" value="user">User</option>
                             {{-- <option value="Lost">Lost</option> --}}
-                        </select>
-                        <select class="form-select form-select-lg mb-3" id="status" name="status" aria-label="Status">
+                        </select><label for="status" class="form-label text-capitalize">status</label>
+                        <select class="form-select text-capitalize form-select-lg mb-3" id="status" name="status" aria-label="Status">
                             {{-- <option selected>Status</option> --}}
-                            <option class="text-capitalize" value="aktif">aktif</option>
-                            <option class="text-capitalize" value="inactive">inactive</option>
+                            <option class="text-capitalize" value="aktif">Active</option>
+                            <option class="text-capitalize" value="inactive">Inactive</option>
                             {{-- <option class="text-capitalize" value="staff gudang">Staff Gudang</option>
                             <option class="text-capitalize" value="staff">Staff</option> --}}
                             {{-- <option value="Lost">Lost</option> --}}

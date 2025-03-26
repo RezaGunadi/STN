@@ -24,46 +24,31 @@ price
 status
 consumable --}}
                 <div class="card-body">
-                    <form action="{{ route('submit_user') }}" method="POST">
+                    <form action="{{ route('input_user') }}" method="POST">
                         @csrf
-                        <input type="hidden" value="{{ $data->id }}" name="id">
                         <div class="mb-3">
                             <label for="name" class="form-label text-capitalize">name</label>
-                            <input type="text" class="form-control" id="name" name="name" value="{{ $data->name }}"
-                                placeholder="name">
+                            <input type="text" class="form-control" id="name" name="name" placeholder="name">
                         </div>
                         <div class="mb-3">
                             <label for="phone" class="form-label text-capitalize">phone</label>
-                            <input type="text" class="form-control" id="phone" name="phone" value="{{ $data->phone }}"
-                                placeholder="phone">
+                            <input type="text" class="form-control" id="phone" name="phone" placeholder="phone">
                         </div>
                         <div class="mb-3">
                             <label for="email" class="form-label text-capitalize">email</label>
-                            <input type="text" class="form-control" id="email" name="email" value="{{ $data->email }}"
-                                placeholder="email">
+                            <input type="text" class="form-control" id="email" name="email" placeholder="email">
                         </div>
-                        <label for="role" class="form-label text-capitalize">role</label>
-                        <select class="form-select form-select-lg mb-3 text-capitalize" id="role" name="role"
-                            aria-label="role">
+                        <select class="form-select form-select-lg mb-3" id="role" name="role" aria-label="role">
                             {{-- <option selected>Status</option> --}}
-                            <option {{ $data->role == 'admin' ?  "selected":'' }} class="text-capitalize" value="admin">
-                                Admin</option>
-                            <option {{ $data->role == 'staff gudang' ?  "selected":'' }} class="text-capitalize"
-                                value="staff gudang">Staff Gudang</option>
-                            <option {{ $data->role == 'staff' ?  "selected":'' }} class="text-capitalize" value="staff">
-                                Staff</option>
-                            <option {{ $data->role == 'user' ?  "selected":'' }} class="text-capitalize" value="user">
-                                User</option>
+                            <option class="text-capitalize" value="admin">admin</option>
+                            <option class="text-capitalize" value="staff gudang">Staff Gudang</option>
+                            <option class="text-capitalize" value="staff">Staff</option>
                             {{-- <option value="Lost">Lost</option> --}}
                         </select>
-                        <label for="status" class="form-label text-capitalize">status</label>
-                        <select class="form-select form-select-lg mb-3 text-capitalize" id="status" name="status"
-                            aria-label="Status">
+                        <select class="form-select form-select-lg mb-3" id="status" name="status" aria-label="Status">
                             {{-- <option selected>Status</option> --}}
-                            <option {{ $data->status == 'active' ?  "selected":'' }} class="text-capitalize"
-                                value="active">Aktif</option>
-                            <option {{ $data->status == 'inactive' ?  "selected":'' }} class="text-capitalize"
-                                value="inactive">inactive</option>
+                            <option class="text-capitalize" value="aktif">aktif</option>
+                            <option class="text-capitalize" value="inactive">inactive</option>
                             {{-- <option class="text-capitalize" value="staff gudang">Staff Gudang</option>
                             <option class="text-capitalize" value="staff">Staff</option> --}}
                             {{-- <option value="Lost">Lost</option> --}}

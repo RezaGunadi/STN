@@ -215,7 +215,7 @@
 
                                     <a href="{{ route('edit_event',['id' => $item->id]) }}">
 
-                                        <button class="btn btn-secondary">
+                                        <button class="text-capitalize btn btn-secondary">
                                             Edit
                                         </button>
                                     </a>
@@ -223,12 +223,12 @@
 
                                     <a href="{{ route('close_event_detail',['id' => $item->id]) }}">
 
-                                        <button class="btn btn-secondary">
+                                        <button class="text-capitalize btn btn-secondary">
                                             Selesaikan
                                         </button>
                                     </a>
                                     @else
-                                    <button class="btn btn-secondary no-access">
+                                    <button class="text-capitalize btn btn-secondary no-access">
                                         edit
                                     </button>
 
@@ -241,12 +241,12 @@
                                     ||Auth::user()->role=='staff')
 
                                     <a href="{{ route('detail_event',['id' => $item->id]) }}">
-                                        <button class="btn btn-primary my-2 mx-2" style="white-space: nowrap">
+                                        <button class="text-capitalize btn btn-primary my-2 mx-2" style="white-space: nowrap">
                                             Detail
                                         </button>
                                     </a>
                                     @else
-                                    <button class="btn btn-primary no-access my-2 mx-2" style="white-space: nowrap">
+                                    <button class="text-capitalize btn btn-primary no-access my-2 mx-2" style="white-space: nowrap">
                                         Detail
                                     </button>
 

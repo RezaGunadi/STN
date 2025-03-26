@@ -19,8 +19,14 @@ class Jobs extends Migration
             $table->text('event_location');
             $table->string('lat')->nullable();
             $table->string('lng')->nullable();
-            $table->integer('starter_user_id');
+            $table->integer('total_price')->default(0);
+            $table->integer('price_before_discount')->default(0);
+            $table->integer('discount')->default(0);
+            $table->integer('additional_price')->default(0);
+            $table->integer('starter_user_id')->default(0);
             $table->integer('closer_user_id')->default(0);
+            $table->integer('starter_team_id')->default(0);
+            $table->integer('closer_team_id')->default(0);
             $table->string('user_city')->nullable();
             $table->string('user_province')->nullable();
             $table->string('user_address')->nullable();

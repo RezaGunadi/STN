@@ -6,23 +6,23 @@
     <div class="row">
         <div class="col-md-6 mt-3">
 
-            <div class="card px-5">
+            <div class="card px-5 pb-3">
                 <div class="col-4 mx-auto">
 
                     <img src="{{ URL::To('/assets/img/stn_long.png') }}" class="img-fluid" alt="">
                 </div>
                 <div class="row">
                     <div class="col-2">
-                        Name
+                        User
                     </div>
                     <div class="col-auto">
                         :
                     </div>
-                    <div class="col" id="staf-name">
+                    <div class="col" id="staf-data">
                         {{-- {{ Auth::user()->name }} --}}
                     </div>
                 </div>
-                <div class="row">
+                {{-- <div class="row">
                     <div class="col-2">
                         Phone
                     </div>
@@ -30,10 +30,9 @@
                         :
                     </div>
                     <div class="col" id="staf-phone">
-                        {{-- {{ Auth::user()->phone }} --}}
                     </div>
-                </div>
-                <div class="row">
+                </div> --}}
+                {{-- <div class="row">
                     <div class="col-2">
                         Email
                     </div>
@@ -41,10 +40,9 @@
                         :
                     </div>
                     <div class="col" id="staf-email">
-                        {{-- {{ Auth::user()->email }} --}}
                     </div>
-                </div>
-                <div class="row pb-3">
+                </div> --}}
+                {{-- <div class="row pb-3">
                     <div class="col-2">
                         Role
                     </div>
@@ -52,9 +50,11 @@
                         :
                     </div>
                     <div class="col" id="staf-role">
-                        {{-- {{ Auth::user()->role }} --}}
                     </div>
-                </div>
+                </div> --}}
+            </div>
+            <div class="my-3 py-3">
+                <select id="user_search" class="cari form-control w-100" name="cari Pengguna"></select>
             </div>
         </div>
         <div class="col-md-6 mt-3">
@@ -63,11 +63,11 @@
         </div>
     </div>
     <br>
-    {{-- <div class="my-3 py-3">
+    <div class="my-3 py-3">
         <select id="search-product" class="cari form-control w-100" name="cari Produk"></select>
-    </div> --}}
+    </div>
     <form action="{{ route('input_integration') }}" method="POST">
-        <input type="hidden" name="staf_id" id="staf_id">
+        {{-- <input type="hidden" name="staf_id" id="staf_id"> --}}
         <div class="table-responsive">
 
             <table class="table w-100">
@@ -209,11 +209,24 @@
                         $("#input-id-"+data.id).remove();
                     });
                 } else {
-                    $("#staf-name").text(data.name);
-                    $("#staf-email").text(data.email);
-                    $("#staf-phone").text(data.phone);
-                    $("#staf-role").text(data.role);
-                    $("#staf_id").val(data.id);
+                    $('#body-table').append(`<input type="hidden" id="input-staf-id-`+data.id+`" name="staf_ids[]" value="`+data.id+`">`);
+                    $("#staf-data").append(
+                    `<div class="d-block" id="staff-data-show-`+data.id+`">`+        
+                    data.name+"("+data.email+`) <button class="btn btn-secondary py-2" style="font-size:9px;" id="remove-staf-`+data.id+`"">
+                                                    Remove
+                                                </button></div>`
+                );
+                $('#remove-staf-'+data.id).click(function (e) {
+                e.preventDefault();
+                // $( "input[name='sortby']").remove();
+                $("#staff-data-show-"+data.id).addClass("d-none");
+                $("#input-staf-id-"+data.id).remove();
+                });
+                    // $("#staf-name").text(data.name);
+                    // $("#staf-email").text(data.email);
+                    // $("#staf-phone").text(data.phone);
+                    // $("#staf-role").text(data.role);
+                    // $("#staf_id").val(data.id);
 
 
                 }

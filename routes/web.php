@@ -49,8 +49,19 @@ Route::get('/list-product', [App\Http\Controllers\ProductController::class, 'lis
 Route::post('/submit-product', [App\Http\Controllers\ProductController::class, 'submit'])->name('submit_product');
 Route::post('/submit-product-edit', [App\Http\Controllers\ProductController::class, 'submitEdit'])->name('submit_edit_product');
 
+
+Route::get('/input-management-product/{type}', [App\Http\Controllers\ProductController::class, 'inputManage'])->name('input_management_product');
+Route::get('/detail-management-product', [App\Http\Controllers\ProductController::class, 'detailManage'])->name('detail_management_product');
+Route::get('/list-management-product', [App\Http\Controllers\ProductController::class, 'listManage'])->name('list_management_product');
+Route::post('/submit-management-product', [App\Http\Controllers\ProductController::class, 'submitManage'])->name('submit_management_product');
+Route::post('/delete-management-product/{id)', [App\Http\Controllers\ProductController::class, 'deleteManage'])->name('delete_management_product');
+
+
+
+
 Route::post('/submit-user', [App\Http\Controllers\UserController::class, 'submit'])->name('submit_user');
 Route::post('/input-user', [App\Http\Controllers\UserController::class, 'input'])->name('input_user');
+Route::get('/add-user', [App\Http\Controllers\UserController::class, 'addUser'])->name('add_user');
 Route::get('/edit-user/{id}', [App\Http\Controllers\UserController::class, 'edit'])->name('edit_user');
 Route::get('/list-user', [App\Http\Controllers\UserController::class, 'list'])->name('list_user');
 
@@ -65,6 +76,9 @@ Route::get('/generate-qr', [App\Http\Controllers\IntegrationController::class, '
 Route::get('/auto-complete-qr', [App\Http\Controllers\IntegrationController::class, 'autoCompleteQr'])->name('auto_complete_qr');
 Route::get('/auto-complete-user', [App\Http\Controllers\IntegrationController::class, 'autoCompleteUser'])->name('auto_complete_user');
 Route::get('/auto-complete-product', [App\Http\Controllers\IntegrationController::class, 'autoCompleteProduct'])->name('auto_complete_product');
+Route::get('/auto-complete-category', [App\Http\Controllers\IntegrationController::class, 'autoCompleteCategory'])->name('auto_complete_category');
+Route::get('/auto-complete-brand', [App\Http\Controllers\IntegrationController::class, 'autoCompleteBrand'])->name('auto_complete_brand');
+Route::get('/auto-complete-type', [App\Http\Controllers\IntegrationController::class, 'autoCompleteType'])->name('auto_complete_type');
 
 
 Route::get('/my-profile', [App\Http\Controllers\UserController::class, 'myProfile'])->name('myProfile');

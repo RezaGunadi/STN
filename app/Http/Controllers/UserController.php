@@ -74,15 +74,40 @@ class UserController extends Controller
         // $result = $result->get();
         return view('page.user.list', ['data' => $result, 'number' => $startFrom, 'title' => 'user']);
     }
+    public function addUser()
+    {
+        return view('page.user.input', [ 'title' => 'user']);
+    }
     public function input(Request $request)
     {
         $data = $request->all();
+        $checkData = User::where('email',$request->email)->orWhere('phone', $request->phone)->first();
+        if($checkData){
+            return redirect()->back()->with('error', 'Nomor Ponsel atau E-Mail sudah terpakai');
+
+        }
         $data['password'] = $data['phone'];
+        Log::info('1');
         $registerController = new RegisterController();
-        $result = $registerController->create($data);
-        $result->status = $data['status'];
-        $result->role = $data['role'];
-        $result->Save();
+        $registerController->validator($data);
+        Log::info('2');
+        $registerController->create($data);
+        Log::info('3');
+        $user = User::where('email', $request->email)->first();
+        Log::info('4');
+        $user->status = $data['status'];
+        Log::info('5');
+        $user->role = $data['role'];
+        Log::info('6');
+        $user->created_by = Auth::user()->id;
+        $user->Save();
+
+        $history = new HistoriesDB();
+        $old = '';
+        $new = '';
+        $column = '';
+       
+            $history->input($user->id, 'user', 'create', $old, $new, $column, $user->toArray());
         return redirect(URL::To('/list-user'))->with('success', 'Berhasil menambahkan pengguna');
     }
     public function submit(Request $request)

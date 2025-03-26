@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\HistoriesDB;
 use App\Models\ProductDB;
 use App\Models\ProductTypeDB;
+use App\Models\TeamsDB;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Validator;
+use ProductType;
 
 class ProductController extends Controller
 {
@@ -89,10 +92,11 @@ class ProductController extends Controller
         if (array_key_exists('order_priority', $data)) {
             $limit = $data['order_priority'];
         }
+        $myTeamIds = TeamsDB::where('user_id', Auth::user()->id)->pluck('group_id');
         $result = ProductDB::
             // take($limit)->skip($startFrom)->
             orderBy($orderBy, $orderPriority);
-        $result = $result->where('user_id', Auth::user()->id);
+        $result = $result->whereIn('team_id', $myTeamIds);
 
         if (array_key_exists('category', $data)) {
             $result = $result->where('category', 'LIKE', '%' . $data['category'] . '%');
@@ -110,7 +114,7 @@ class ProductController extends Controller
             $result = $result->where('product_name', 'LIKE', '%' . $data['product_name'] . '%');
         }
         if (array_key_exists('input_date', $data)) {
-            if ($data['input_date']!='') {
+            if ($data['input_date'] != '') {
                 # code...
                 $paramStart = Carbon::parse($data['input_date'] . ' 00:00:00')->format('Y-m-d H:i:s');
                 $paramEnd = Carbon::parse($data['input_date'] . ' 23:59:59')->format('Y-m-d H:i:s');
@@ -141,7 +145,8 @@ class ProductController extends Controller
             ->where('brand', $data['brand'])
             ->where('type', $data['type'])->first();
         for ($xxx = 0; $xxx < $data['looping']; $xxx++) {
-
+            $data['price'] = preg_replace('/[^0-9]/', '', $data['price']);
+            $data['rental_price'] = preg_replace('/[^0-9]/', '', $data['rental_price']);
             $product = new ProductDB();
             $product->product_name = $data['name'];
             $product->description = $data['description'];
@@ -151,6 +156,7 @@ class ProductController extends Controller
             $product->payment_date =
                 date("Y-m-d", strtotime($data['date']));
             $product->price = $data['price'];
+            $product->rental_price = $data['rental_price'];
             $product->status = $data['status'];
             // dd($data);qr_string
             $totalType = ProductDB::whereNull('deleted_at')
@@ -269,9 +275,16 @@ class ProductController extends Controller
             $product->purpose_used = $oldData->purpose_used;
         }
         if (array_key_exists('price', $data)) {
+            $data['price']=preg_replace('/[^0-9]/', '', $data['price']);
             $product->price = $data['price'];
         } else {
             $product->price = $oldData->price;
+        }
+        if (array_key_exists('rental_price', $data)) {
+            $data['rental_price']=preg_replace('/[^0-9]/', '', $data['rental_price']);
+            $product->rental_price = $data['rental_price'];
+        } else {
+            $product->rental_price = $oldData->rental_price;
         }
         if (array_key_exists('status', $data)) {
             $product->status = $data['status'];
@@ -431,6 +444,15 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
+        if (array_key_exists('rental_price', $data)) {
+
+            if ($data['rental_price'] != $additionalData['rental_price']) {
+                $column = 'rental_price';
+                $old = $additionalData['rental_price'];
+                $new = $data['rental_price'];
+                $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
+            }
+        }
         if (array_key_exists('status', $data)) {
 
             if ($data['status'] != $additionalData['status']) {
@@ -542,7 +564,7 @@ class ProductController extends Controller
         $product->save();
         $oldData->updated_by = Auth::user()->id;
         $oldData->save();
-        $oldData->delete();
+        // $oldData->delete();
 
 
         return redirect(URL::To('/list-product'))->with('success', 'Berhasil mengubah data produk');
@@ -558,25 +580,25 @@ class ProductController extends Controller
         for ($i = 0; $i < count($key1Array); $i++) {
             if (count($key1Array) > 0) {
                 if (strlen($key1Array[$i]) > 0) {
-                    $result = $result . $key1Array[$i][0];
+                    $result = $result . $key1Array[$i][0] . $key1Array[$i][1];
                 }
             }
         }
         for ($i = 0; $i < count($key2Array); $i++) {
             if (count($key2Array) > 0) {
                 if (strlen($key2Array[$i]) > 0) {
-                    $result = $result . $key2Array[$i][0];
+                    $result = $result . $key2Array[$i][0] . $key2Array[$i][0];
                 }
             }
         }
         for ($i = 0; $i < count($key3Array); $i++) {
             if (count($key3Array) > 0) {
                 if (strlen($key3Array[$i]) > 0) {
-                    $result = $result . $key3Array[$i][0];
+                    $result = $result . $key3Array[$i][0] . $key3Array[$i][0];
                 }
             }
         }
-        return $result;
+        return strtoupper($result);
     }
     function generateCode($currectDigit, $key)
     {
@@ -589,5 +611,76 @@ class ProductController extends Controller
         }
         $result = $result . $currectDigit;
         return $result;
+    }
+
+
+    public function inputManage( $type)
+    {
+        // dd($type);
+        return view('page.management.input', ['data' => $type, 'number' => 0, 'title' => 'product']);
+    }
+    public function detailManage(Request $request) {}
+    public function listManage(Request $request)
+    {
+        $data = ProductTypeDB::where('id', '>', 0);
+        $params = $request->all();
+        if (array_key_exists('category', $params)) {
+            # code...
+            if ($params['category'] != '') {
+                $data = $data->where('category', 'LIKE', "%" . $params['category'] . "%");
+            }
+        }
+        if (array_key_exists('brand', $params)) {
+            # code...
+            if ($params['brand'] != '') {
+                $data = $data->where('brand', 'LIKE', "%" . $params['brand'] . "%");
+            }
+        }
+        if (array_key_exists('type', $params)) {
+            # code...
+            if ($params['type'] != '') {
+                $data = $data->where('type', 'LIKE', "%" . $params['type'] . "%");
+            }
+        }
+        if (array_key_exists('code', $params)) {
+            # code...
+            if ($params['code'] != '') {
+                $data = $data->where('code', 'LIKE', "%" . $params['code'] . "%");
+            }
+        }
+        $data = $data->orderBy('category', 'asc')->paginate(25);
+        // $result = $result->get();
+        return view('page.management.list', ['data' => $data, 'number' => 0, 'title' => 'product']);
+    }
+    public function submitManage(Request $request)
+    {
+
+
+        $request->validate([
+            'category' => 'required|min:2',
+            'brand' => 'required|min:2',
+            'type' => 'required|min:2',
+        ]);
+        $data = new ProductTypeDB();
+        $data->category = $request->category;
+        $data->brand = $request->brand;
+        $data->type = $request->type;
+
+        $newCode = $this->generateNewCode($request->category, $request->brand, $request->type);
+        $data->code = $newCode;
+        $data->created_by = Auth::user()->id;
+        $data->save();
+        $history = new HistoriesDB();
+        $history->input($data->id, 'product_type', 'create', '', '', '', '');
+        return redirect()->back()->with('success', 'Berhasil menambahkan data baru');
+    }
+    public function deleteManage($id)
+    {
+        $productTypeDB =   ProductTypeDB::where('id', $id)->first();
+
+        $history = new HistoriesDB();
+        $history->input($productTypeDB->id, 'product_type', 'delete', '', '', '', '');
+        $productTypeDB->delete();
+        return redirect()->back()->with('success', 'Berhasil menghapus data');
     }
 }

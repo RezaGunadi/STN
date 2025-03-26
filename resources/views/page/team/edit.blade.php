@@ -47,13 +47,11 @@ consumable --}}
                             aria-label="role">
                             {{-- <option selected>Status</option> --}}
                             <option {{ $data->role == 'admin' ?  "selected":'' }} class="text-capitalize" value="admin">
-                                Admin</option>
+                                admin</option>
                             <option {{ $data->role == 'staff gudang' ?  "selected":'' }} class="text-capitalize"
                                 value="staff gudang">Staff Gudang</option>
                             <option {{ $data->role == 'staff' ?  "selected":'' }} class="text-capitalize" value="staff">
                                 Staff</option>
-                            <option {{ $data->role == 'user' ?  "selected":'' }} class="text-capitalize" value="user">
-                                User</option>
                             {{-- <option value="Lost">Lost</option> --}}
                         </select>
                         <label for="status" class="form-label text-capitalize">status</label>

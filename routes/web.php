@@ -90,6 +90,13 @@ Route::get('/reset-pass', [App\Http\Controllers\UserController::class, 'emailTes
 
 Route::get('/my-item', [App\Http\Controllers\ProductController::class, 'myItem'])->name('myItem');
 
+
+
+
+
+Route::get('/signature', [App\Http\Controllers\SignatureController::class, 'show']);
+Route::post('/signature', [App\Http\Controllers\SignatureController::class, 'store'])->name('signature.store');
+
 // Route::get('/autocomplete', array('as' => 'autocomplete', 'uses' => 'App\Http\Controllers\SearchController@autocomplete'));
 
 

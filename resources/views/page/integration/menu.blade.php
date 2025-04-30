@@ -1,57 +1,91 @@
 @extends('layouts.index')
 @push('css')
-    <style>
-        .card .read-more:hover{
-        font-size: 14px;
-        }
-        
-        .card:hover{
-        box-shadow: 8px 8px 8px rgb(214,18,18);
-        transform:scale(1.03);
-        }
-    </style>
+<style>
+    .integration-card {
+        transition: all 0.3s ease;
+        border: none;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #D61212 0%, #B30E0E 100%);
+        box-shadow: 0 4px 15px rgba(214, 18, 18, 0.2);
+    }
+
+    .integration-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(214, 18, 18, 0.3);
+    }
+
+    .integration-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .integration-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 0.5rem;
+    }
+
+    .integration-description {
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.9);
+        line-height: 1.5;
+    }
+
+    .container-card {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+</style>
 @endpush
+
 @section('content')
-<div class="col-md-9 mx-auto py-3">
-    <div class="p-3" style="border-radius: 12px; border-color: black; border-block: initial;border-width: 1px;border-style: solid;">
+<div class="col-md-9 mx-auto py-4">
+    <div class="container-card">
+        <h1 class="section-title">Asset Management Portal</h1>
 
-        <div class="row ">
-            <div class="col-md-6 mt-3">
-            <a href="{{ URL::To('/closing-integration') }}">
-                    <div style="text-align: center; color: #fff; background-color: #D61212; border-radius: 12px; font-weight: 600; font-size:28px;  " class="card p-3">
-        
-                        <div class="d-inline-block">
-        
-                            <i class="bi bi-box-arrow-in-down-right"></i> 
-                            <span class="px-4">
-                                Barang Masuk
-                            </span>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <a href="{{ URL::To('/closing-integration') }}" class="text-decoration-none">
+                    <div class="integration-card p-4 text-center">
+                        <div class="integration-icon">
+                            <i class="bi bi-box-arrow-in-down-right"></i>
                         </div>
+                        <h2 class="integration-title">Asset Returns</h2>
+                        <p class="integration-description">
+                            Streamline the process of asset returns and transfers. This module facilitates the seamless
+                            handover of equipment from field staff to warehouse personnel, ensuring proper documentation
+                            and accountability.
+                        </p>
                     </div>
                 </a>
             </div>
-            <div class="col-md-6 mt-3">
-            <a href="{{ URL::To('/integration') }}">
-                    <div style="text-align: center; color: #fff; background-color: #D61212; border-radius: 12px; font-weight: 600; font-size:28px;  " class="card p-3">
-        
-                        <div class="d-inline-block">
-        
-                            <i class="bi bi-box-arrow-down-right"></i> 
-                            <span class="px-4">
-                                Barang Keluar
-                            </span>
+
+            <div class="col-md-6">
+                <a href="{{ URL::To('/integration') }}" class="text-decoration-none">
+                    <div class="integration-card p-4 text-center">
+                        <div class="integration-icon">
+                            <i class="bi bi-box-arrow-down-right"></i>
                         </div>
+                        <h2 class="integration-title">Asset Deployment</h2>
+                        <p class="integration-description">
+                            Manage the deployment of assets to field operations. This system enables efficient tracking
+                            of equipment assignments and maintains clear records of asset distribution from warehouse to
+                            field staff.
+                        </p>
                     </div>
                 </a>
-            </div>
-        </div>
-        <div class="row">
-
-            <div class="col-md-6 mt-4" style="text-align: center;">
-                Fungsi Barang Masuk untuk mencatat semua aktivitas pengembalian barang dan pemindahan tanggung jawab dari staf kepada staf gundang
-            </div>
-            <div class="col-md-6 mt-4" style="text-align: center;">
-                Fungsi Barang Keluar untuk mencatat semua aktivitas peminjaman barang dan pemindahan tanggung jawab dari staf gudang kepada staf lapangan
             </div>
         </div>
     </div>

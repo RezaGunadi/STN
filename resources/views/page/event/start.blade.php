@@ -2,29 +2,27 @@
 @push('css')
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
 <link rel="stylesheet" href="/resources/demos/style.css">
-<style>
-    .unauthorized-message {
-        text-align: center;
-        padding: 2rem;
-        background: #f8d7da;
-        color: #721c24;
-        border-radius: 4px;
-        margin: 2rem 0;
-    }
-</style>
+
 @endpush
 @section('content')
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-12">
-            @if(!$isCloserTeamMember)
-            <div class="unauthorized-message">
-                <h4>Unauthorized Access</h4>
-                <p>You are not authorized to close this event. Only members of the closer team can access this page.</p>
-            </div>
-            @else
             <div class="card">
-                <div class="card-header" style="font-weight: 600; color: #000;">{{ __('Close Event') }}</div>
+                <div class="card-header" style="font-weight: 600; color: #000;">{{ __('Input Event') }}
+                </div>
+                {{-- product_code
+product_name
+category
+brand
+type
+code
+description
+payment_date
+purpose_used
+price
+status
+consumable --}}
                 <div class="card-body">
                     <form action="{{ route('close_submit_event') }}" method="POST">
                         @csrf
@@ -86,29 +84,30 @@
                     @enderror
                 </div>
                 <div class="table-responsive">
+
                     <table class="table w-100">
                         <thead>
                             <tr>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class="text-capitalize">#</th>
+                                    class=" text-capitalize">#</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class="text-capitalize">product code</th>
+                                    class=" text-capitalize">product code</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class="text-capitalize">product name</th>
+                                    class=" text-capitalize">product name</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class="text-capitalize">category</th>
+                                    class=" text-capitalize">category</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class="text-capitalize">brand</th>
+                                    class=" text-capitalize">brand</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class="text-capitalize">type</th>
+                                    class=" text-capitalize">type</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class="text-capitalize">description</th>
+                                    class=" text-capitalize">description</th>
+                                {{-- <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class=" text-capitalize">purpose used</th> --}}
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class="text-capitalize">price</th>
-                                <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class="text-capitalize">status</th>
-                                <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class="text-capitalize">action</th>
+                                    class=" text-capitalize">Action</th>
+                                {{-- <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class=" text-capitalize">Item Tidak Ada</th> --}}
                             </tr>
                         </thead>
                         <tbody style="font-weight: 400!important; font-size: 14px;">
@@ -122,82 +121,63 @@
                             <tr>
                                 <th scope="row" style="font-weight: 400!important;">{{ $number }}</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
-                                    class="text-capitalize">
+                                    class=" text-capitalize">
                                     {{ $item->product_code }}</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
-                                    class="text-capitalize">
+                                    class=" text-capitalize">
                                     {{ $item->product_name }}</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
-                                    class="text-capitalize">
+                                    class=" text-capitalize">
                                     {{ $item->category }}</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
-                                    class="text-capitalize">
-                                    {{ $item->brand }}</th>
-                                <th scope="col" style="text-align: center;font-weight: 400!important;"
-                                    class="text-capitalize">
-                                    {{ $item->type }}</th>
-                                <th scope="col" style="text-align: center;font-weight: 400!important;"
-                                    class="text-capitalize">
-                                    {{ $item->description }}</th>
-                                <th scope="col" style="text-align: center;font-weight: 400!important;"
-                                    class="text-capitalize">
-                                    {{ number_format($item->price, 0, ',', '.') }}</th>
-                                <th scope="col" style="text-align: center;font-weight: 400!important;"
-                                    class="text-capitalize">
-                                    @if($item->is_consumable == 1)
-                                    <span class="badge bg-info">Consumable</span>
-                                    @else
-                                    <span class="badge bg-primary">Non-Consumable</span>
-                                    @endif
+                                    class=" text-capitalize">
+                                    {{ $item->brand }}
                                 </th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
-                                    class="text-capitalize">
+                                    class=" text-capitalize">
+                                    {{ $item->type }}
+                                </th>
+                                <th scope="col" style="text-align: center;font-weight: 400!important;"
+                                    class=" text-capitalize">
+                                    {{ $item->description }}</th>
+                                {{-- <th scope="col" style="text-align: center;font-weight: 400!important;"
+                                    class=" text-capitalize">
+                                    {{ $item->purpose_used }}</th> --}}
+                                <th scope="col" style="text-align: center;font-weight: 400!important;"
+                                    class=" text-capitalize  ">
                                     <Select class="form-select" name="item_id[{{ $item->id }}]">
                                         <option value="ada">Ada</option>
                                         <option value="return">Di Bawa Kembali</option>
                                         @if ($item->is_consumable==1)
+                                            
                                         <option value="hilang">Habis</option>
                                         @else
                                         <option value="hilang">Hilang</option>
+                                            
                                         @endif
                                     </Select>
+                                    {{-- <input type="checkbox" name="item_id[]" value="{{ $item->id }}"
+                                        {{ $event!=null ? $event->id==$item->event_id ?'checked':'':'' }}> --}}
                                 </th>
                             </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
-                <button class="btn btn-primary text-capitalize mt-5 w-100" id="submitClose" type="submit">
-                    Submit Event Closure
+                <button class="btn btn-primary text-capitalize mt-5 w-100" id="inputData" type="submit">
+                    submit
                 </button>
                 </form>
             </div>
         </div>
     </div>
-    @endsection
-
-    @push('script')
-    <script>
-        $(function() {
-        $("#date").datepicker();
-        
-        // Form submission validation
-        $('form').on('submit', function(e) {
-            const selectedProducts = $('select[name^="item_id"]').length;
-            const selectedAda = $('select[name^="item_id"] option:selected[value="ada"]').length;
-            const selectedReturn = $('select[name^="item_id"] option:selected[value="return"]').length;
-            
-            if (selectedAda + selectedReturn === 0) {
-                e.preventDefault();
-                alert('Please select at least one product as "Ada" or "Di Bawa Kembali"');
-                return false;
-            }
-            
-            if (!confirm('Are you sure you want to submit the event closure? This action cannot be undone.')) {
-                e.preventDefault();
-                return false;
-            }
-        });
-    });
-    </script>
-    @endpush
+</div>
+</div>
+@endsection
+@push('script')
+<script>
+    $( function() {
+        $( "#date" ).datepicker();
+      } );
+</script>
+@endpush

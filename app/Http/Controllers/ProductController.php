@@ -69,9 +69,46 @@ class ProductController extends Controller
         if (array_key_exists('product_name', $data)) {
             $result = $result->where('product_name', 'LIKE', '%' . $data['product_name'] . '%');
         }
+
+        // Get all products for grouping
+        $allProducts = $result->get();
+
+        // Group products by category, brand, and type
+        $groupedProducts = [];
+        foreach ($allProducts as $product) {
+            $key = $product->category . '|' . $product->brand . '|' . $product->type;
+            if (!isset($groupedProducts[$key])) {
+                $groupedProducts[$key] = [
+                    'category' => $product->category,
+                    'brand' => $product->brand,
+                    'type' => $product->type,
+                    'products' => [],
+                    'total_quantity' => 0,
+                    'available_quantity' => 0,
+                    'non_available_quantity' => 0
+                ];
+            }
+            $groupedProducts[$key]['products'][] = $product;
+            $groupedProducts[$key]['total_quantity']++;
+            if ($product->is_available == 1) {
+                $groupedProducts[$key]['available_quantity']++;
+            } else {
+                $groupedProducts[$key]['non_available_quantity']++;
+            }
+        }
+
+        // Sort groups by category, brand, and type
+        ksort($groupedProducts);
+
+        // Paginate the results for standard view
         $result = $result->paginate(10);
-        // $result = $result->get();
-        return view('page.product.list', ['data' => $result, 'number' => $startFrom, 'title' => 'product']);
+
+        return view('page.product.list', [
+            'data' => $result,
+            'groupedProducts' => $groupedProducts,
+            'number' => $startFrom,
+            'title' => 'product'
+        ]);
     }
     public function myItem(Request $request)
     {
@@ -156,6 +193,7 @@ class ProductController extends Controller
             $product->payment_date =
                 date("Y-m-d", strtotime($data['date']));
             $product->price = $data['price'];
+            $product->purchase_price = $data['price'];
             $product->rental_price = $data['rental_price'];
             $product->status = $data['status'];
             // dd($data);qr_string
@@ -173,15 +211,15 @@ class ProductController extends Controller
             if (array_key_exists('consumable', $data)) {
                 $product->is_consumable = 1;
             }
-            if ($data['code'] != null) {
-                if ($data['looping'] > 1) {
-                    $product->product_code = $code;
-                } else {
-                    $product->product_code = $data['code'];
-                }
-            } else {
-                $product->product_code = $code;
-            }
+            // if ($data['code'] != null) {
+            //     if ($data['looping'] > 1) {
+            //         $product->product_code = $code;
+            //     } else {
+            //         $product->product_code = $data['code'];
+            //     }
+            // } else {
+            $product->product_code = $code;
+            // }
             $product->code = $code;
 
             $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -275,13 +313,13 @@ class ProductController extends Controller
             $product->purpose_used = $oldData->purpose_used;
         }
         if (array_key_exists('price', $data)) {
-            $data['price']=preg_replace('/[^0-9]/', '', $data['price']);
+            $data['price'] = preg_replace('/[^0-9]/', '', $data['price']);
             $product->price = $data['price'];
         } else {
             $product->price = $oldData->price;
         }
         if (array_key_exists('rental_price', $data)) {
-            $data['rental_price']=preg_replace('/[^0-9]/', '', $data['rental_price']);
+            $data['rental_price'] = preg_replace('/[^0-9]/', '', $data['rental_price']);
             $product->rental_price = $data['rental_price'];
         } else {
             $product->rental_price = $oldData->rental_price;
@@ -614,7 +652,7 @@ class ProductController extends Controller
     }
 
 
-    public function inputManage( $type)
+    public function inputManage($type)
     {
         // dd($type);
         return view('page.management.input', ['data' => $type, 'number' => 0, 'title' => 'product']);

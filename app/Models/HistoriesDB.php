@@ -2,17 +2,26 @@
 
 namespace App\Models;
 
+use App\Traits\TracksChanges;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\ProductDB;
+use App\Models\User;
+use App\Models\JobsDB;
+use App\Models\JobDetailsDB;
+use App\Models\ProductTypeDB;
+use App\Models\ChangeLog;
 
-class HistoriesDB extends Authenticatable
+class HistoriesDB extends Model
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, TracksChanges;
 
     protected $table = 'histories';
     /**
@@ -24,111 +33,76 @@ class HistoriesDB extends Authenticatable
         'id',
     ];
 
-    public function input($id, $type, $action, $old, $new, $colom, $additionalData)
-    {
-        // $user = User::where('id', )->first();
-        $params['ref_id'] = $id;
-        $params['ref_type'] = $type;
-        $params['desc'] = '';
-        $params['created_by'] =  Auth::user()->id;
-        $unique = '';
-        try {
-            //code...
-            if ($action == 'delete') {
-                if ($type == 'product') {
-                    $data = ProductDB::where('id', $id)->first();
-                    $data->name = $data->product_name;
-
-                    $history = new ProductHistoriesDB();
-                    $history->input($additionalData);
-                } else if ($type == 'user') {
-                    $data = User::where('id', $id)->first();
-
-                    $history = new UserHistoriesDB();
-                    $history->input($additionalData);
-                } else if ($type == 'product_type') {
-                    $data = ProductTypeDB::where('id', $id)->first();
-
-                    // $history = new UserHistoriesDB();
-                    // $history->input($additionalData);
-                }
-                $params['desc'] = $params['desc'] . ' telah menghapus kategori ' . $data->category
-                    . ',brand ' . $data->brand
-                    . ',type ' . $data->type
-                    . ',code ' . $data->code;
-            } else {
-                if ($action == 'create') {
-                    # code...
-                    if ($type == 'user') {
-                        $data = User::where('id', $id)->first();
-                        $unique = $data->email;
-
-                        $history = new UserHistoriesDB();
-                        $history->input($additionalData);
-                        $params['desc'] = $params['desc'] . ' telah menambah pengguna dengan email ' . $data->email;
-                    }
-                    if ($type == 'product_type') {
-                        $data = ProductTypeDB::where('id', $id)->first();
-                        $unique = $data->email;
-
-                        // $history = new UserHistoriesDB();
-                        // $history->input($additionalData);
-                        $params['desc'] = $params['desc'] . ' telah menambah kategori ' . $data->category
-                            . ',brand ' . $data->brand
-                            . ',type ' . $data->type
-                            . ',code ' . $data->code;
-                    }
-                } else {
-                    # code...
-                    if ($type == 'product') {
-                        $data = ProductDB::where('id', $id)->first();
-                        $data->name = $data->product_name;
-                        $unique = $data->product_code;
-
-                        $history = new ProductHistoriesDB();
-                        $history->input($additionalData);
-                        $params['desc'] = $params['desc'] . ' telah mengubah ' . $unique . ', kolom ' . $colom . ' dari ' . $old . ' menjadi ' . $new;
-                    } else if ($type == 'user') {
-                        $data = User::where('id', $id)->first();
-                        $unique = $data->email;
-
-                        $history = new UserHistoriesDB();
-                        $history->input($additionalData);
-                        $params['desc'] = $params['desc'] . ' telah mengubah ' . $unique . ', kolom ' . $colom . ' dari ' . $old . ' menjadi ' . $new;
-                    } else if ($type == 'event') {
-                        $data = JobsDB::where('id', $id)->first();
-                        $unique = $data->event_name;
-
-                        $history = new JobHistoryDB();
-                        $additionalData['created_by'] = Auth::user()->id;
-                        $additionalData['updated_by'] = Auth::user()->id;
-                        $additionalData['deleted_by'] = 0;
-                        $history->input($additionalData);
-                        $params['desc'] = $params['desc'] . ' telah mengubah ' . $unique . ', kolom ' . $colom . ' dari ' . $old . ' menjadi ' . $new;
-                    } else if ($type == 'event_detail') {
-                        $data = JobDetailsDB::where('id', $id)->first();
-                        // $unique = $data->event_name;
-
-                        $params['ref_type'] = 'Detail Event';
-                        $history = new JobDetailHistoryDB();
-                        $additionalData['job_detail_id'] = $data->id;
-                        $additionalData['created_by'] = Auth::user()->id;
-                        $additionalData['updated_by'] = Auth::user()->id;
-                        $additionalData['deleted_by'] = 0;
-                        $history->input($additionalData);
-                        $params['desc'] = $params['desc'] . ' telah menambah ' . $data->product->code . ' ke ' . $data->event->event_name;
-                    }
-                }
-            }
-        } catch (\Throwable $th) {
-            //throw $th;
-            dd($th->getMessage() . ' || ' . $th->getLine());
-        }
-
-        return HistoriesDB::create($params);
-    }
+    /**
+     * Get the user who created this history entry
+     */
     public function user()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Legacy method for backward compatibility
+     * This will now use the new ChangeLog system internally
+     */
+    public function input($id, $type, $action, $old, $new, $colom, $additionalData)
+    {
+        try {
+            $model = null;
+            $modelType = null;
+
+            // Determine the model type and instance
+            switch ($type) {
+                case 'product':
+                    $model = ProductDB::find($id);
+                    $modelType = ProductDB::class;
+                    break;
+                case 'user':
+                    $model = User::find($id);
+                    $modelType = User::class;
+                    break;
+                case 'event':
+                    $model = JobsDB::find($id);
+                    $modelType = JobsDB::class;
+                    break;
+                case 'event_detail':
+                    $model = JobDetailsDB::find($id);
+                    $modelType = JobDetailsDB::class;
+                    break;
+                case 'product_type':
+                    $model = ProductTypeDB::find($id);
+                    $modelType = ProductTypeDB::class;
+                    break;
+                default:
+                    throw new \Exception("Unknown model type: {$type}");
+            }
+
+            if (!$model) {
+                throw new \Exception("Model not found for ID: {$id}");
+            }
+
+            // Create the change log entry
+            $changeLog = ChangeLog::logChange(
+                $action,
+                $model,
+                $colom,
+                $old,
+                $new,
+                $additionalData
+            );
+
+            // Create the legacy history entry for backward compatibility
+            $params = [
+                'ref_id' => $id,
+                'ref_type' => $type,
+                'desc' => $changeLog->description,
+                'created_by' => Auth::id()
+            ];
+
+            return static::create($params);
+        } catch (\Exception $e) {
+            Log::error("Error in HistoriesDB::input: " . $e->getMessage());
+            throw $e;
+        }
     }
 }

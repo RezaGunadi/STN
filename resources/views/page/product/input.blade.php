@@ -26,11 +26,11 @@ consumable --}}
                 <div class="card-body">
                     <form action="{{ route('submit_product') }}" method="POST">
                         @csrf
-                        <div class="mb-3" id="code_section">
+                        {{-- <div class="mb-3" id="code_section">
                             <label for="code" class="form-label text-capitalize">Code</label>
                             <input type="text" class="form-control" id="code" name="code"
                                 placeholder="Kosongkan Untuk Auto Generate">
-                        </div>
+                        </div> --}}
                         <div class="mb-3">
                             <label for="name" class="form-label text-capitalize">Name</label>
                             <input type="text" class="form-control @error('name') is-invalid @enderror" required
@@ -91,7 +91,7 @@ consumable --}}
                         </div>
                         <div class="mb-3">
                             <label for="price" class="form-label text-capitalize">Purchase Price</label>
-                            <input type="number" onkeyup="oneDot(this)" class="form-control @error('price') is-invalid @enderror" required
+                            <input type="text" onkeyup="oneDot(this)" class="form-control @error('price') is-invalid @enderror" required
                                 id="price" name="price" placeholder="100000">
                             @error('phone')
                             <span class="invalid-feedback" role="alert">
@@ -101,7 +101,7 @@ consumable --}}
                         </div>
                         <div class="mb-3">
                             <label for="rental_price" class="form-label text-capitalize">Rental Price</label>
-                            <input type="number" onkeyup="oneDot(this)" class="form-control @error('rental_price') is-invalid @enderror" required
+                            <input type="text" onkeyup="oneDot(this)" class="form-control @error('rental_price') is-invalid @enderror" required
                                 id="rental_price" name="rental_price" placeholder="100000">
                             @error('phone')
                             <span class="invalid-feedback" role="alert">

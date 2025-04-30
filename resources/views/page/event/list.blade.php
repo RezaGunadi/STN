@@ -235,18 +235,47 @@
                                     @endif
                                     @endif
 
+                                    @if (!$item->start_date)
+                                    @php
+                                    $isStarterTeamMember = \App\Models\TeamsDB::where('group_id',
+                                    $item->starter_team_id)
+                                    ->where('user_id', Auth::id())
+                                    ->exists();
+                                    @endphp
+                                    @if($isStarterTeamMember)
+                                    <button class="text-capitalize btn btn-success start-event"
+                                        data-event-id="{{ $item->id }}" onclick="startEvent({{ $item->id }})">
+                                        Start Event
+                                    </button>
+                                    @endif
+                                    @endif
 
+                                    @if($item->start_date && !$item->finish_date)
+                                    @php
+                                    $isCloserTeamMember = \App\Models\TeamsDB::where('group_id', $item->closer_team_id)
+                                    ->where('user_id', Auth::id())
+                                    ->exists();
+                                    @endphp
+                                    @if($isCloserTeamMember)
+                                    <button class="text-capitalize btn btn-warning close-event"
+                                        data-event-id="{{ $item->id }}" onclick="closeEvent({{ $item->id }})">
+                                        Close Event
+                                    </button>
+                                    @endif
+                                    @endif
 
                                     @if (Auth::user()->role=='owner' || Auth::user()->role=='admin'
                                     ||Auth::user()->role=='staff')
 
                                     <a href="{{ route('detail_event',['id' => $item->id]) }}">
-                                        <button class="text-capitalize btn btn-primary my-2 mx-2" style="white-space: nowrap">
+                                        <button class="text-capitalize btn btn-primary my-2 mx-2"
+                                            style="white-space: nowrap">
                                             Detail
                                         </button>
                                     </a>
                                     @else
-                                    <button class="text-capitalize btn btn-primary no-access my-2 mx-2" style="white-space: nowrap">
+                                    <button class="text-capitalize btn btn-primary no-access my-2 mx-2"
+                                        style="white-space: nowrap">
                                         Detail
                                     </button>
 
@@ -298,4 +327,56 @@
 </script>
 
 
+@endpush
+
+@push('js')
+<script>
+    function startEvent(eventId) {
+    if (confirm('Are you sure you want to start this event?')) {
+        $.ajax({
+            url: '/start-event',
+            type: 'POST',
+            data: {
+                event_id: eventId,
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Event started successfully');
+                    location.reload();
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function(xhr) {
+                alert(xhr.responseJSON.message || 'An error occurred while starting the event');
+            }
+        });
+    }
+}
+
+function closeEvent(eventId) {
+    if (confirm('Are you sure you want to close this event?')) {
+        $.ajax({
+            url: '/close-event-action',
+            type: 'POST',
+            data: {
+                event_id: eventId,
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Event closed successfully');
+                    location.reload();
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function(xhr) {
+                alert(xhr.responseJSON.message || 'An error occurred while closing the event');
+            }
+        });
+    }
+}
+</script>
 @endpush

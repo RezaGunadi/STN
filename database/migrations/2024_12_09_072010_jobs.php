@@ -31,6 +31,8 @@ class Jobs extends Migration
             $table->string('user_province')->nullable();
             $table->string('user_address')->nullable();
             $table->string('client');
+            $table->text('signature');
+            $table->text('signature_picture');
             $table->dateTime('start_date')->nullable();
             $table->dateTime('finish_date')->nullable();
             // $table->foreign('starter_user_id')->references('id')->on('users');

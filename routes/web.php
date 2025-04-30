@@ -34,6 +34,11 @@ Route::get('/detail-event/{id}', [App\Http\Controllers\EventController::class, '
 Route::get('/list-event', [App\Http\Controllers\EventController::class, 'list'])->name('list_event');
 Route::post('/submit-event', [App\Http\Controllers\EventController::class, 'submit'])->name('submit_event');
 Route::post('/submit-event-edit', [App\Http\Controllers\EventController::class, 'submitEdit'])->name('submit_edit_event');
+Route::post('/start-event', [App\Http\Controllers\EventController::class, 'startEvent'])->name('start_event');
+Route::post('/close-event-action', [App\Http\Controllers\EventController::class, 'closeEvent'])->name('close_event');
+Route::post('/mark-product-installed', [App\Http\Controllers\EventController::class, 'markProductInstalled'])->name('mark_product_installed');
+Route::post('/save-signature', [App\Http\Controllers\EventController::class, 'saveSignature'])->name('save_signature');
+Route::post('/save-photo', [App\Http\Controllers\EventController::class, 'savePhoto'])->name('save_photo');
 
 Route::get('/reports', [App\Http\Controllers\ReportController::class, 'list'])->name('report_list');
 

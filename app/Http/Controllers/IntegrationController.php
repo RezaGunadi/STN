@@ -47,24 +47,70 @@ class IntegrationController extends Controller
         foreach ($request->id as  $value) {
             array_push($ids, $value);
         }
-        // staf_ids
-        $group_id = 1;
-        $lastTeam = TeamsDB::where('id', '>', 0)->orderBy('id')->first();
-        if ($lastTeam) {
-            $group_id = $lastTeam->group_id + 1;
+
+        // Get the staff IDs from the request
+        $staff_ids = $request->staf_ids;
+
+        // Check if there's an existing team with the same users
+        $existing_group_id = null;
+
+        // Get all unique group IDs from TeamsDB
+        $all_groups = TeamsDB::select('group_id')
+            ->where('group_id', '>', 0)
+            ->groupBy('group_id')
+            ->get();
+
+        foreach ($all_groups as $group) {
+            // Get all users in this group
+            $group_users = TeamsDB::where('group_id', $group->group_id)
+                ->pluck('user_id')
+                ->toArray();
+
+            // Check if the number of users match
+            if (count($group_users) == count($staff_ids)) {
+                // Check if all users in the request are in this group
+                $all_users_match = true;
+                foreach ($staff_ids as $staff_id) {
+                    if (!in_array($staff_id, $group_users)) {
+                        $all_users_match = false;
+                        break;
+                    }
+                }
+
+                if ($all_users_match) {
+                    $existing_group_id = $group->group_id;
+                    break;
+                }
+            }
         }
-        foreach ($request->staf_ids as $staf_id) {
-            $team = new TeamsDB();
-            $team->group_id = $group_id;
-            $team->user_id = $staf_id;
-            $team->save();
+
+        // If an existing group was found, use it; otherwise, create a new group
+        if ($existing_group_id != NULL) {
+            $group_id = $existing_group_id;
+        } else {
+            $group_id = 1;
+            $lastTeam = TeamsDB::where('id', '>', 0)->orderBy('id', 'desc')->first();
+            if ($lastTeam) {
+                $group_id = $lastTeam->group_id + 1;
+            }
+
+            // Create new team entries
+            foreach ($staff_ids as $staf_id) {
+                $team = new TeamsDB();
+                $team->group_id = $group_id;
+                $team->user_id = $staf_id;
+                $team->save();
+            }
         }
-        $products =  ProductDB::whereIn('id', $ids)->get();
+
+        // Update products with the team ID
+        $products = ProductDB::whereIn('id', $ids)->get();
         foreach ($products as $product) {
             $product->is_available = 0;
             $product->team_id = $group_id;
             $product->save();
         }
+
         return redirect(URL::To('/integration'))->with('success', 'Berhasil memproses produk');
     }
     public function close(Request $request)
@@ -79,6 +125,7 @@ class IntegrationController extends Controller
         foreach ($products as $product) {
             $product->is_available = 1;
             $product->user_id = 0;
+            $product->team_id = 0;
             $product->save();
         }
         return redirect(URL::To('/integration-menu'))->with('success', 'Berhasil memproses produk');

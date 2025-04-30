@@ -1211,14 +1211,21 @@
   </script>
   <script>
     function oneDot(input) {
-    var value = input.value,
-    value = value.split('.').join('');
-    
-    if (value.length > 3) {
-    value = value.substring(0, value.length - 3) + '.' + value.substring(value.length - 3, value.length);
-    }
-    
-    input.value = value;
+      // Remove all non-numeric characters
+      var value = String(input.value.replace(/[^0-9]/g, ''));
+      
+      // Format with thousand separators
+      var result = '';
+      var length = value.length;
+      
+      for (var i = 0; i < length; i++) {
+        if (i > 0 && (length - i) % 3 === 0) {
+          result += '.';
+        }
+        result += value[i];
+      }
+      // Update the input value
+      input.value = result;
     }
   </script>
   {{-- <script type="text/javascript">

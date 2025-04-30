@@ -21,6 +21,12 @@ class JobDetails extends Migration
             $table->integer('day_finished')->default(0);
             $table->string('lat_user');
             $table->string('lng_user');
+            $table->text('picture');
+            $table->integer('total_price')->default(0);
+            $table->integer('price_before_discount')->default(0);
+            $table->integer('discount')->default(0);
+            $table->integer('is_installed')->default(0);
+            $table->integer('additional_price')->default(0);
             $table->bigInteger('event_id');
             $table->integer('created_by');
             $table->integer('deleted_by')->default(0);

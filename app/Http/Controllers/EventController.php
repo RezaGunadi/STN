@@ -7,6 +7,7 @@ use App\Models\JobDetailsDB;
 use App\Models\JobsDB;
 use App\Models\ProductDB;
 use App\Models\ReportDB;
+use App\Models\TeamsDB;
 use App\Models\User;
 use Carbon\Carbon;
 use DateTime;
@@ -88,7 +89,7 @@ class EventController extends Controller
         }
         if (array_key_exists('status', $data)) {
             if ($data['status'] != null) {
-                if ($data['status'] != '' && $data['status']!='all') {
+                if ($data['status'] != '' && $data['status'] != 'all') {
                     if ($data['status'] == 'pending') {
                         $result = $result->whereNull('finish_date');
                     } else {
@@ -105,7 +106,7 @@ class EventController extends Controller
         if (array_key_exists('start_date', $data)) {
             // dd($paramStart);
             if ($data['start_date'] != '') {
-                $paramStart = Carbon::parse($data['start_date'] . ' 00:00:00')->format('Y-m-d H:i:s') ;
+                $paramStart = Carbon::parse($data['start_date'] . ' 00:00:00')->format('Y-m-d H:i:s');
                 $result = $result->where(
                     'start_date',
                     '>=',
@@ -223,12 +224,12 @@ class EventController extends Controller
                 // }
             } else {
                 $job = new JobsDB();
-                $checkEvent = JobsDB::where('event_name',$data['event_name'])->first();
+                $checkEvent = JobsDB::where('event_name', $data['event_name'])->first();
                 return Redirect::back()->with('error', 'Nama event tidak boleh sama');
             }
         } else {
             $job = new JobsDB();
-            $checkEvent = JobsDB::where('event_name',$data['event_name'])->first();
+            $checkEvent = JobsDB::where('event_name', $data['event_name'])->first();
             if ($checkEvent) {
                 return Redirect::back()->with('error', 'Nama event tidak boleh sama');
             }
@@ -244,33 +245,52 @@ class EventController extends Controller
         $job->user_province = $data['ip']->regionName;
         $job->user_address = $data['ip']->city . ' ' . $data['ip']->regionName . ', ' . $data['ip']->country;
         $job->client = $data['client'];
+
+        // Handle starter team and closer team if provided
+        if (isset($data['starter_team']) && !empty($data['starter_team'])) {
+            $job->starter_team_id = $data['starter_team'];
+        }
+
+        if (isset($data['closer_team']) && !empty($data['closer_team'])) {
+            $job->closer_team_id = $data['closer_team'];
+        }
+
         if ($isEdit) {
             # code...
             $job->start_date = now();
             $job->closer_user_id = 0;
             $job->deleted_by = 0;
-            $job->updated_by
-                =
-                Auth::user()->id;
+            $job->updated_by = Auth::user()->id;
         }
         // $job->finish_date= $request->;
         $job->save();
+
+        // Process products and their discounts
         if ($request->has('item_id')) {
             # code...
             foreach ($request->item_id as $value) {
                 # code...
                 $checkJob = JobDetailsDB::where('id_product', $value)->where('event_id', $job->id)->first();
+                $theProduct = ProductDB::where('id', $value)->first();
                 if (!$checkJob) {
                     # code...
                     $jobDetail = new JobDetailsDB();
                     $jobDetail->id_product = $value;
                     $jobDetail->lat_user = $data['ip']->lat;
                     $jobDetail->lng_user = $data['ip']->lon;
-                    $jobDetail->event_id
-                        = $job->id;
+                    $jobDetail->event_id = $job->id;
                     $jobDetail->created_by = Auth::user()->id;
                     $jobDetail->deleted_by = 0;
                     $jobDetail->updated_by = Auth::user()->id;
+                    $discount = 0;
+                    // Set discount for this product if provided
+                    if (isset($data['discount'][$value]) && !empty($data['discount'][$value])) {
+                        $jobDetail->discount = $data['discount'][$value];
+                        $discount = $data['discount'][$value];
+                    }
+                    $jobDetail->price_before_discount = $theProduct->rental_price;
+                    $jobDetail->total_price = $theProduct->rental_price - $discount;
+
                     $jobDetail->save();
                     $product = ProductDB::where('id', $value)->first();
                     $product->event_id = $job->id;
@@ -301,7 +321,26 @@ class EventController extends Controller
                     $old = '';
                     $new = '';
                     $history->input($additionalData['id'], 'event_detail', 'update', $old, $new, $column, $parameter);
+                } else {
+                    // Update existing job detail with new discount if provided
+                    if (isset($data['discount'][$value]) && !empty($data['discount'][$value])) {
+                        $checkJob->discount = $data['discount'][$value];
+                        $checkJob->updated_by = Auth::user()->id;
+                        $discount = $data['discount'][$value];
+                        $checkJob->price_before_discount = $theProduct->rental_price;
+                        $checkJob->total_price = $theProduct->rental_price - $data['discount'][$value];
+                        $checkJob->save();
+                    }
                 }
+            }
+            $jobDetails = JobDetailsDB::where('event_id', $job->id)->get();
+            foreach ($jobDetails as  $jobDetail) {
+                # code...
+                JobsDB::where('id', $job->id)->update([
+                    'total_price' => $job->total_price + $jobDetail->total_price,
+                    'price_before_discount' => $job->price_before_discount + $jobDetail->price_before_discount,
+                    'discount' => $job->discount + $discount,
+                ]);
             }
         }
 
@@ -336,184 +375,124 @@ class EventController extends Controller
     }
     public function submitClose(Request $request)
     {
-        $data = $request->all();
-        $itemId = array_values($request->item_id);
-        $ip = request()->ip();
-        $ip = '72.14.201.145';           // something like 127.0.0.1
-        $url = "http://ip-api.com/json/" . $ip;    // http://ip-api.com/127.0.0.1
-        $ipResult = Http::get($url);
-        $data['ip'] = json_decode($ipResult->body());
-        $data['lat'] = $data['ip']->city;
-        // dd($data);
-        $product_ids = [];
-        if ($request->has('item_id')) {
-            foreach ($request->item_id as $key => $value) {
-                array_push($product_ids, $key);
+        try {
+            $event = JobsDB::findOrFail($request->event_id);
+
+            // Verify user is in closer team
+            $isCloserTeamMember = TeamsDB::where('group_id', $event->closer_team_id)
+                ->where('user_id', Auth::id())
+                ->exists();
+
+            if (!$isCloserTeamMember) {
+                return redirect()->back()->with('error', 'You are not authorized to close this event.');
             }
-        }
-        if ($request->has('event_id')) {
-            if ($request->event_id != 0) {
-                $job = JobsDB::where('id', $request->event_id)->first();
-                // $additionalData = clone $job;
-                // $additionalData = $additionalData->toArray();
 
+            // Get all products for this event
+            $products = ProductDB::where('event_id', $event->id)->get();
 
+            // Get starter team members
+            $starterTeamMembers = TeamsDB::where('group_id', $event->starter_team_id)
+                ->with('user')
+                ->get();
 
-                // $history = new HistoriesDB();
-                // $old = '';
-                // $new = '';
-                // $column = '';
-                // $parameter = [
-                //     'id' => $job['id'],
-                //     'event_name' => $job['event_name'],
-                //     'event_location' => $job['event_location'],
-                //     'lat' => $job['lat'],
-                //     'lng' => $job['lng'],
-                //     'starter_user_id' => $job['starter_user_id'],
-                //     'closer_user_id' => Auth::user()->id,
-                //     'user_city' => $job['user_city'],
-                //     'user_province' => $job['user_province'],
-                //     'user_address' => $job['user_address'],
-                //     'client' => $job['client'],
-                //     'start_date' => $job['start_date'],
-                //     'finish_date' => $job['finish_date'],
-                // ];
+            $starterTeamCount = $starterTeamMembers->count();
 
+            // Process each product
+            foreach ($products as $product) {
+                $status = $request->input("item_id.{$product->id}");
 
-                // $column = '';
-                // $old = '';
-                // $new = '';
-                // $history->input($additionalData['id'], 'event', 'update', $old, $new, $column, $parameter);
+                if ($status === 'ada' || $status === 'return') {
+                    // Product is present or returned - move to closer team
+                    $product->event_id = 0;
+                    $product->user_id = Auth::id(); // Assign to the closer who submitted
+                    $product->save();
+                } else {
+                    // Product is lost/consumed - create report entries
+                    $pricePerPerson = $product->price / $starterTeamCount;
 
-                // $jobs = JobDetailsDB::where('event_id', $request->event_id)->get();
-                // foreach ($jobs as $job) {
-                //     $additionalData = clone $job;
-                //     $additionalData = $additionalData->toArray();
+                    foreach ($starterTeamMembers as $member) {
+                        // Create report entry
+                        $report = new ReportDB();
+                        $report->item_id = $product->id;
+                        $report->price = $pricePerPerson;
+                        $report->note = "Product {$status} during event {$event->event_name}";
+                        $report->reporter_id = Auth::id();
+                        $report->user_id = $member->user_id;
+                        $report->save();
 
-
-
-                //     $history = new HistoriesDB();
-                //     $old = '';
-                //     $new = '';
-                //     $column = '';
-                //     $parameter = [
-                //         'job_detail_id' => $job['job_detail_id'],
-                //         'id_product' => $job['id_product'],
-                //         'lat_user' => $job['lat_user'],
-                //         'lng_user' => $job['lng_user'],
-                //         'event_id' => $job['event_id'],
-                //         'created_by' => $job['created_by'],
-                //         'updated_by' => Auth::user()->id,
-                //         'deleted_by' => $job['deleted_by'],
-                //     ];
-
-                //     $column = '';
-                //     $old = '';
-                //     $new = '';
-                //     $history->input($additionalData['id'], 'event_detail', 'update', $old, $new, $column, $parameter);
-                // }
-            } else {
-                $job = new JobsDB();
-            }
-        } else {
-            $job = new JobsDB();
-        }
-        $job->closer_user_id = Auth::user()->id;
-        // $job->closer_user_id = 0;
-        // $job->deleted_by = 0;
-        $job->updated_by =
-            Auth::user()->id;
-        // $job->start_date = now();
-        $job->finish_date = now();
-        $job->save();
-        if ($request->has('item_id')) {
-            # code...
-            foreach ($request->item_id as $key => $value) {
-                # code...
-                $checkJob = JobDetailsDB::where('id_product', $key)->where('event_id', $job->id)->first();
-                if ($checkJob) {
-                    if ($value == 'ada') {
-                        # code...
-                        $checkJob->updated_by = Auth::user()->id;
-                        $checkJob->save();
-                        $date1 = new DateTime($checkJob->created_at);
-                        $date2 = new DateTime($checkJob->updated_at);
-                        $interval = $date1->diff($date2);
-                        $checkJob->day_finished =
-                            $interval->days + 1;
-                        $checkJob->save();
-                        $product = ProductDB::where('id', $key)->first();
-                        $product->event_id = 0;
-                        $product->user_id =
-                            Auth::user()->id;
-                        $product->save();
-                    } else {
-                        if ($value == 'return') {
-                            $checkJob->updated_by = Auth::user()->id;
-                            $checkJob->save();
-                            $date1 = new DateTime($checkJob->created_at);
-                            $date2 = new DateTime($checkJob->updated_at);
-                            $interval = $date1->diff($date2);
-                            $checkJob->day_finished =
-                                $interval->days + 1;
-                            $checkJob->save();
-                            $product = ProductDB::where('id', $key)->first();
-                            $product->event_id = 0;
-                            $product->save();
-                        } else {
-                            Log::info('Rport barang hilang');
-                            $checkJob->updated_by = Auth::user()->id;
-                            $checkJob->save();
-                            $date1 = new DateTime($checkJob->created_at);
-                            $date2 = new DateTime($checkJob->updated_at);
-                            $interval = $date1->diff($date2);
-                            $checkJob->day_finished =
-                                $interval->days + 1;
-                            $checkJob->save();
-
-                            $product = ProductDB::where('id', $key)->first();
-                            if ($product->is_consumable == 0) {
-                                # code...
-                                $report = new ReportDB();
-                                $report->item_id = $key;
-                                $report->price = $product->price;
-                                $report->note = 'Hilang pada event ' . $job->event_name . ' pada ' . now() . '. di konfirmasi oleh ' . Auth::user()->name;
-                                $report->reporter_id =
-                                    Auth::user()->id;
-                                $report->user_id = $checkJob->created_by;
-                                $report->deleted_by = 0;
-                                $report->updated_by = 0;
-                                $report->created_by =
-                                    Auth::user()->id;
-                                $report->delete_reason = '';
-                                $report->save();
-                                $user = User::where('id', $checkJob->created_by)->first();
-                                $user->total_kerugian = $user->total_kerugian + $product->price;
-                                $product->status= 'Lost';
-                                $product->save();
-                                $user->save();
-                            }
-                        }
+                        // Update user's total loss
+                        $user = User::find($member->user_id);
+                        $user->total_kerugian += $pricePerPerson;
+                        $user->save();
                     }
+
+                    // Mark product as lost/consumed
+                    $product->status = $status === 'hilang' ? 'Lost' : 'Consumed';
+                    $product->save();
                 }
             }
-        }
 
-        return redirect(URL::To('/list-event'))->with('success', 'Berhasil menutup event');
+            // Update event status
+            $event->finish_date = now();
+            $event->closer_user_id = Auth::id();
+            $event->save();
+
+            return redirect()->route('list_event')->with('success', 'Event closed successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error closing event: ' . $e->getMessage());
+        }
     }
     public function input()
-
     {
-        $data = ProductDB::where('user_id', Auth::user()->id)->where('event_id', 0)->get();
-        return view('page.event.input', ['data' => $data, 'title' => 'event', 'event' => null]);
+        // Only load available products (not deleted and not assigned to an event)
+        $data = ProductDB::where('deleted_at', NULL)
+            ->where(function ($query) {
+                $query->where('event_id', 0)
+                    ->orWhereNull('event_id');
+            })
+            ->get();
+
+        // Load teams with their members in a single query using eager loading
+        $teams = TeamsDB::where('deleted_at', NULL)
+            ->with(['user' => function ($query) {
+                $query->select('id', 'name', 'email', 'phone');
+            }])
+            ->get()
+            ->groupBy('group_id');
+
+        // Transform the teams data to include members
+        $teamsData = [];
+        foreach ($teams as $group_id => $teamMembers) {
+            $teamsData[] = [
+                'group_id' => $group_id,
+                'member' => $teamMembers
+            ];
+        }
+        $user = User::where('deleted_at', NULL)->get();
+        return view('page.event.input', [
+            'data' => $data,
+            'teams' => $teamsData,
+            'user' => $user,
+            'title' => 'event',
+            'event' => null
+        ]);
     }
     public function close($id)
-
     {
-        $event = JobsDB::where('id', $id)->first();
-        $product = ProductDB::where('event_id', $id)
-            ->get();
-        return view('page.event.close', ['data' => $product, 'title' => 'event', 'event' => $event]);
+        $event = JobsDB::findOrFail($id);
+        $products = ProductDB::where('event_id', $id)->get();
+
+        // Check if current user is in the closer team
+        $isCloserTeamMember = TeamsDB::where('group_id', $event->closer_team_id)
+            ->where('user_id', Auth::id())
+            ->exists();
+
+        return view('page.event.close', [
+            'data' => $products,
+            'title' => 'event',
+            'event' => $event,
+            'isCloserTeamMember' => $isCloserTeamMember
+        ]);
     }
     public function edit($id)
     {
@@ -526,9 +505,20 @@ class EventController extends Controller
     }
     public function detail($id)
     {
-        $event = JobsDB::where('id', $id)->first();
-        $product = ProductDB::where('event_id', $id)->get();
-        return view('page.event.detail', ['data' => $product, 'title' => 'event', 'event' => $event]);
+        $event = JobsDB::findOrFail($id);
+        $products = ProductDB::where('event_id', $id)->get();
+
+        // Check if current user is in the closer team
+        $isCloserTeamMember = TeamsDB::where('group_id', $event->closer_team_id)
+            ->where('user_id', Auth::id())
+            ->exists();
+
+        return view('page.event.detail', [
+            'data' => $products,
+            'title' => 'event',
+            'event' => $event,
+            'isCloserTeamMember' => $isCloserTeamMember
+        ]);
     }
 
     public function submitEdit(Request $request)
@@ -863,5 +853,177 @@ class EventController extends Controller
 
 
         return redirect(URL::To('/list-product'))->with('success', 'Berhasil mengubah data event');
+    }
+
+    public function startEvent(Request $request)
+    {
+        $event = JobsDB::findOrFail($request->event_id);
+
+        // Check if user is in the starter team
+        $starterTeam = TeamsDB::where('group_id', $event->starter_team_id)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if (!$starterTeam) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not authorized to start this event. Only starter team members can start the event.'
+            ], 403);
+        }
+
+        // Check if event is already started
+        if ($event->start_date) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This event has already been started.'
+            ], 400);
+        }
+
+        // Start the event
+        $event->start_date = now();
+        $event->starter_user_id = Auth::id();
+        $event->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Event started successfully'
+        ]);
+    }
+
+    public function closeEvent(Request $request)
+    {
+        try {
+            $event = JobsDB::findOrFail($request->event_id);
+
+            // Verify user is in closer team
+            $isCloserTeamMember = TeamsDB::where('group_id', $event->closer_team_id)
+                ->where('user_id', Auth::id())
+                ->exists();
+
+            if (!$isCloserTeamMember) {
+                return redirect()->back()->with('error', 'You are not authorized to close this event.');
+            }
+
+            // Get all products for this event
+            $products = ProductDB::where('event_id', $event->id)->get();
+
+            // Get starter team members
+            $starterTeamMembers = TeamsDB::where('group_id', $event->starter_team_id)
+                ->with('user')
+                ->get();
+
+            $starterTeamCount = $starterTeamMembers->count();
+
+            // Process each product
+            foreach ($products as $product) {
+                if (in_array($product->id, $request->products ?? [])) {
+                    // Product is checked - move to closer team
+                    $product->event_id = 0;
+                    $product->user_id = Auth::id(); // Assign to the closer who submitted
+                    $product->save();
+                } else {
+                    // Product is not checked - create report entries
+                    $pricePerPerson = $product->price / $starterTeamCount;
+
+                    foreach ($starterTeamMembers as $member) {
+                        // Create report entry
+                        $report = new ReportDB();
+                        $report->item_id = $product->id;
+                        $report->price = $pricePerPerson;
+                        $report->note = "Product lost during event {$event->event_name}";
+                        $report->reporter_id = Auth::id();
+                        $report->user_id = $member->user_id;
+                        $report->save();
+
+                        // Update user's total loss
+                        $user = User::find($member->user_id);
+                        $user->total_kerugian += $pricePerPerson;
+                        $user->save();
+                    }
+
+                    // Mark product as lost
+                    $product->status = 'Lost';
+                    $product->save();
+                }
+            }
+
+            // Update event status
+            $event->finish_date = now();
+            $event->closer_user_id = Auth::id();
+            $event->save();
+
+            return redirect()->route('list_event')->with('success', 'Event closed successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error closing event: ' . $e->getMessage());
+        }
+    }
+
+    public function markProductInstalled(Request $request)
+    {
+        try {
+            $request->validate([
+                'product_id' => 'required|exists:job_details,id',
+                'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048'
+            ]);
+
+            $jobDetail = JobDetailsDB::findOrFail($request->product_id);
+
+            // Store the photo
+            $photoPath = $request->file('photo')->store('product_photos', 'public');
+
+            // Update the job detail
+            $jobDetail->update([
+                'is_installed' => true,
+                'photo_path' => $photoPath,
+                'installed_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product marked as installed successfully',
+                'photo_url' => asset('storage/' . $photoPath)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to mark product as installed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function saveSignature(Request $request)
+    {
+        try {
+            $request->validate([
+                'event_id' => 'required|exists:jobs,id',
+                'signature' => 'required|string'
+            ]);
+
+            $event = JobsDB::findOrFail($request->event_id);
+            $event->signature = $request->signature;
+            $event->save();
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function savePhoto(Request $request)
+    {
+        try {
+            $request->validate([
+                'event_id' => 'required|exists:jobs,id',
+                'photo' => 'required|string'
+            ]);
+
+            $event = JobsDB::findOrFail($request->event_id);
+            $event->signature_picture = $request->photo;
+            $event->save();
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 }

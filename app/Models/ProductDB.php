@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Traits\TracksChanges;
 
 class ProductDB extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, TracksChanges;
 
     protected $table = 'product';
     /**
@@ -42,6 +43,24 @@ class ProductDB extends Authenticatable
     }
     public function getTeam()
     {
-        return $this->hasMany(TeamsDB::class, 'group_id', 'team_id' );
+        return $this->belongsTo(TeamsDB::class,  'team_id', 'group_id');
+    }
+    public function getTeams()
+    {
+        return $this->hasMany(TeamsDB::class, 'group_id', 'team_id');
+    }
+    public function getEvent()
+    {
+        return $this->belongsTo(JobsDB::class, 'event_id');
+    }
+
+    public function team()
+    {
+        return $this->belongsTo(TeamsDB::class);
+    }
+
+    public function transfers()
+    {
+        return $this->hasMany(ProductTransfer::class);
     }
 }

@@ -1,6 +1,6 @@
 @extends('layouts.index')
 @push('css')
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+
 <link rel="stylesheet" href="/resources/demos/style.css">
 
 @endpush
@@ -43,7 +43,7 @@ consumable --}}
                     </span>
                     @enderror
                 </div> --}}
-                @if (Auth::user()->role=='owner' || Auth::user()->role == 'admin' || Auth::user()->role == 'ADMIN')
+                @if (Auth::user()->role=='owner' || Auth::user()->role == 'admin' || Auth::user()->role == 'ADMIN'|| Auth::user()->role == 'super_user')
 
                 <div class="mb-3">
                     <label for="description" class="form-label text-capitalize">description</label>
@@ -92,8 +92,8 @@ consumable --}}
             </div> --}}
             <div class="mb-3">
                 <label for="price" class="form-label text-capitalize">Price</label>
-                <input type="number" onkeyup="oneDot(this)" class="form-control @error('price') is-invalid @enderror" required
-                    value="{{ $data->price }}" id="price" name="price" placeholder="100000">
+                <input type="number" onkeyup="oneDot(this)" class="form-control @error('price') is-invalid @enderror"
+                    required value="{{ $data->price }}" id="price" name="price" placeholder="100000">
                 @error('phone')
                 <span class="invalid-feedback" role="alert">
                     <strong>{{ $message }}</strong>
@@ -102,7 +102,8 @@ consumable --}}
             </div>
             <div class="mb-3">
                 <label for="rental_price" class="form-label text-capitalize">Rental Price</label>
-                <input type="number" onkeyup="oneDot(this)" class="form-control @error('rental_price') is-invalid @enderror" required id="rental_price"
+                <input type="number" onkeyup="oneDot(this)"
+                    class="form-control @error('rental_price') is-invalid @enderror" required id="rental_price"
                     name="rental_price" placeholder="100000">
                 @error('phone')
                 <span class="invalid-feedback" role="alert">
@@ -141,7 +142,21 @@ consumable --}}
                 <option {{ $data->status == 'Broken' ?  "selected":'' }} value="Broken">Broken</option>
                 <option {{ $data->status == 'Lost' ?  "selected":'' }} value="Lost">Lost</option>
             </select>
-
+            <div class="mb-3">
+                <label for="image" class="form-label">Product Image</label>
+                @if($data->image && file_exists(public_path('upload/product/'.$data->image)))
+                <div class="mb-2">
+                    <img src="{{ asset('upload/product/'.$data->image) }}" alt="Product Image" style="max-width:120px;">
+                </div>
+                @else
+                <div class="mb-2">
+                    <img src="{{ asset('assets/icon/default-product.svg') }}" alt="Default Product Image"
+                        style="max-width:120px;">
+                </div>
+                @endif
+                <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                <small class="text-muted">Upload untuk mengganti gambar</small>
+            </div>
             <button class="btn btn-primary text-capitalize mt-5 w-100" id="inputData" type="submit">
                 submit
             </button>

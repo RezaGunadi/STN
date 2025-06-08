@@ -54,7 +54,8 @@
                 </div> --}}
             </div>
             <div class="my-3 py-3">
-                <select id="user_search" class="cari form-control w-100" name="cari Pengguna"></select>
+                <select id="user_search_new" name="user_search" class="cari form-control w-100"
+                    data-placeholder="Cari Pengguna"></select>
             </div>
         </div>
         <div class="col-md-6 mt-3">
@@ -64,7 +65,8 @@
     </div>
     <br>
     <div class="my-3 py-3">
-        <select id="search-product" class="cari form-control w-100" name="cari Produk"></select>
+        <select id="search-product" name="product_search" class="cari form-control w-100"
+            data-placeholder="Cari Produk"></select>
     </div>
     <form action="{{ route('input_integration') }}" method="POST">
         {{-- <input type="hidden" name="staf_id" id="staf_id"> --}}
@@ -113,12 +115,12 @@
                 </tbody>
             </table>
         </div>
-        @if (Auth::user()->role =='staff gudang' || Auth::user()->role =='owner')
-            
+        @if (Auth::user()->role =='gudang' || Auth::user()->role =='owner'|| Auth::user()->role == 'super_user')
+
         <button class="btn btn-primary w-100" id="inputData" type="submit">Submit</button>
         @else
-        
-        <div class="btn btn-secondary no-access w-100" >Submit</div>
+
+        <div class="btn btn-secondary no-access w-100">Submit</div>
         @endif
     </form>
 </div>
@@ -278,4 +280,172 @@
     hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, enabledFormats);
     const codeReader = new ZXing.BrowserMultiFormatReader(hints);
 </script> --}}
+
+<!-- Inisialisasi Select2 untuk user search -->
+
+<script type="text/javascript">
+    //   userSelect.on("select2:select", function (e) { formatRepoUser("select2:select", e); });
+//   function formatRepoUser (selectName,data) {
+//   var parsedTestuser = data.params.data.text.split(',');
+
+//   // $('#remove-staf-from-search-'+data.params.data.id).click(function (e) {
+//   // e.preventDefault();
+//   // $("#input-staf-id-bertanggungjawab-"+data.params.data.id).remove();
+//   // $("#staff-data-show-new-"+data.params.data.id).remove('d-none');
+  
+//   // });
+//   $('#body-table').append(`<input type="hidden" id="input-staf-id-`+data.params.data.id+`" name="staf_ids[]" value="`+data.params.data.id+`">`);
+//   $("#staf-data").append(
+//   `<div id="staff-data-show-`+data.params.data.id+`">`+
+//     parsedTestuser[0]+`  <button class="btn btn-secondary py-2" style="font-size:9px;" id="remove-staf-from-search-`+data.params.data.id+`">
+//                                                         Remove
+//                                                     </button></div>`
+//                   );
+//   $('#remove-staf-from-search-'+data.params.data.id).click(function (e) {
+//   e.preventDefault();
+//   // $( "input[name='sortby']").remove();
+//   $("#staff-data-show-"+data.params.data.id).addClass("d-none");
+//   $("#input-staf-id-"+data.params.data.id).remove();
+//   });
+//         }
+</script>
+<script type="text/javascript">
+    $(document).ready(function() {
+        // Inisialisasi Select2 untuk user search
+        $('#user_search_new').select2({
+            placeholder: 'Cari Pengguna...',
+            allowClear: true,
+            ajax: {
+                url: '/auto-complete-user',
+                dataType: 'json',
+                delay: 250,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                data: function(params) {
+                    return {
+                        q: params.term || '',
+                        page: params.page || 1
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item.id,
+                                text: item.name + ' (' + item.email + ')'
+                            };
+                        })
+                    };
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', {
+                        status: status,
+                        error: error,
+                        response: xhr.responseText
+                    });
+                    alert('Terjadi kesalahan saat mencari pengguna. Silakan coba lagi.');
+                }
+            },
+            minimumInputLength: 2,
+            tags: false,
+            tokenSeparators: [','],
+            escapeMarkup: function(markup) {
+                return markup;
+            }
+        });
+
+        // Inisialisasi Select2 untuk product search
+        $('#search-product').select2({
+            placeholder: 'Cari Produk...',
+            allowClear: true,
+            ajax: {
+                url: '/auto-complete-product',
+                dataType: 'json',
+                delay: 250,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                data: function(params) {
+                    return {
+                        q: params.term || '',
+                        page: params.page || 1
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item.id,
+                                text: item.product_name + ' (' + item.code + ')',
+                                code: item.code,
+                                product_name: item.product_name,
+                                status: item.status
+                            };
+                        })
+                    };
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', {
+                        status: status,
+                        error: error,
+                        response: xhr.responseText
+                    });
+                    alert('Terjadi kesalahan saat mencari produk. Silakan coba lagi.');
+                }
+            },
+            minimumInputLength: 2,
+            tags: false,
+            tokenSeparators: [','],
+            escapeMarkup: function(markup) {
+                return markup;
+            }
+        });
+
+        // Event handler untuk user search
+        $('#user_search_new').on('select2:select', function(e) {
+            var data = e.params.data;
+            $('#body-table').append(`<input type="hidden" id="input-staf-id-${data.id}" name="staf_ids[]" value="${data.id}">`);
+            $("#staf-data").append(
+                `<div class="d-block" id="staff-data-show-${data.id}">` +        
+                data.text + ` <button class="btn btn-secondary py-2" style="font-size:9px;" id="remove-staf-${data.id}">
+                    Remove
+                </button></div>`
+            );
+            $(`#remove-staf-${data.id}`).click(function(e) {
+                e.preventDefault();
+                $(`#staff-data-show-${data.id}`).addClass("d-none");
+                $(`#input-staf-id-${data.id}`).remove();
+            });
+        });
+
+        // Event handler untuk product search
+        $('#search-product').on('select2:select', function(e) {
+            var data = e.params.data;
+            $('#body-table').append(`<tr id="table-${data.id}">
+                <th scope="col" style="text-align: center;font-weight: 400!important;" class="text-capitalize">
+                    ${data.code}</th>
+                <th scope="col" style="text-align: center;font-weight: 400!important;" class="text-capitalize">
+                    ${data.product_name}</th>
+                <th scope="col" style="text-align: center;font-weight: 400!important;" class="text-capitalize">
+                    ${data.status}</th>
+                <th scope="col" style="text-align: center;font-weight: 400!important;" class="text-capitalize">
+                    <button class="btn btn-secondary" id="remove-${data.id}">
+                        Delete
+                    </button>
+                </th>
+            </tr>`);
+            $('#body-table').append(`<input type="hidden" id="input-id-${data.id}" name="id[]" value="${data.id}">`);
+            $(`#remove-${data.id}`).click(function(e) {
+                e.preventDefault();
+                $(`#table-${data.id}`).addClass("d-none");
+                $(`#input-id-${data.id}`).remove();
+            });
+        });
+    });
+</script>
 @endpush

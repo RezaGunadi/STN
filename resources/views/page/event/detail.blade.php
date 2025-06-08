@@ -1,12 +1,14 @@
 @extends('layouts.index')
 @push('css')
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+
 <link rel="stylesheet" href="/resources/demos/style.css">
 <style>
     .signature-pad {
         border: 1px solid #ccc;
         border-radius: 4px;
         background: #fff;
+        width: 100%;
+        height: 200px;
     }
 
     .product-image {
@@ -46,7 +48,7 @@
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-12">
-            @if(!$isCloserTeamMember)
+            @if(!$isCloserTeamMember && !$isStarterTeamMember && Auth::user()->role != 'super_user' && Auth::user()->role != 'owner')
             <div class="unauthorized-message">
                 <h4>Unauthorized Access</h4>
                 <p>You are not authorized to view this page. Only members of the closer team can access this page.</p>
@@ -71,7 +73,7 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label text-capitalize">Client</label>
-                                <input readonly type="text" value="{{ $event->client }}" class="form-control">
+                                <input readonly type="text" value="{{ $event->clientData->name }}" class="form-control">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -84,7 +86,7 @@
                         </div>
                     </div>
 
-                    <form id="closeEventForm" action="{{ route('close_event') }}" method="POST">
+                    <form id="closeEventForm" action="{{ route('close_event',['id' => $event->id]) }}" method="POST">
                         @csrf
                         <input type="hidden" name="event_id" value="{{ $event->id }}">
                         <div class="table-responsive">
@@ -100,7 +102,7 @@
                                         <th scope="col" class="text-center">Description</th>
                                         <th scope="col" class="text-center">Photo</th>
                                         <th scope="col" class="text-center">Status</th>
-                                        <th scope="col" class="text-center">Check</th>
+                                        {{-- <th scope="col" class="text-center">Check</th> --}}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -116,8 +118,8 @@
                                         <td class="text-center">{{ $item->type }}</td>
                                         <td class="text-center">{{ $item->description }}</td>
                                         <td class="text-center">
-                                            @if($item->picture)
-                                            <img src="{{ $item->picture }}" alt="Product Photo" class="product-image">
+                                            @if($item->picture!=null && $item->picture!='')
+                                            <img src="{{ URL::To($item->picture) }}" alt="Product Photo" class="product-image">
                                             @else
                                             <span class="text-muted">No photo</span>
                                             @endif
@@ -129,27 +131,52 @@
                                             <span class="badge bg-warning">Pending</span>
                                             @endif
                                         </td>
-                                        <td class="text-center">
-                                            <div class="form-check">
+                                        {{-- <td class="text-center">
                                                 <input class="form-check-input product-checkbox" type="checkbox"
                                                     name="products[]" value="{{ $item->id }}"
                                                     id="product{{ $item->id }}">
-                                            </div>
-                                        </td>
+                                        </td> --}}
                                     </tr>
                                     @endforeach
                                 </tbody>
                             </table>
                         </div>
 
-                        @if(!$event->finish_date)
+                        {{-- @if(!$event->finish_date) --}}
+                        @if($event->signature!=NULL && $event->signature_picture!=NULL)
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">Signature</div>
+                                    <div class="card-body">
+                                        <img src="{{ URL::To($event->signature) }}" alt="Signature" class="img-fluid">
+                                        <div class="alert alert-info mt-2">
+                                            Signature has already been captured and cannot be edited.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">Picture</div>
+                                    <div class="card-body">
+                                        <img src="{{ asset($event->signature_picture) }}" alt="Picture"
+                                            class="img-fluid">
+                                        <div class="alert alert-info mt-2">
+                                            Picture has already been captured and cannot be edited.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @else
                         <div class="row mt-4">
                             <div class="col-md-6">
                                 <div class="card">
                                     <div class="card-header">Signature Capture</div>
                                     <div class="card-body">
-                                        <canvas id="signaturePad" class="signature-pad" width="400"
-                                            height="200"></canvas>
+                                        <canvas id="signaturePad" class="signature-pad" width="400" height="300"
+                                            style="border: 1px solid #ccc; border-radius: 4px; touch-action: none;"></canvas>
                                         <div class="capture-buttons">
                                             <button type="button" class="btn btn-secondary"
                                                 id="clearSignature">Clear</button>
@@ -164,31 +191,36 @@
                                     <div class="card-header">Picture Capture</div>
                                     <div class="card-body">
                                         <div class="preview-container">
-                                            <video id="video" width="100%" autoplay></video>
+                                            <video id="video" width="100%" height="300" autoplay playsinline></video>
                                             <canvas id="canvas" style="display:none;"></canvas>
                                             <img id="photo" class="preview-image" style="display:none;">
                                         </div>
                                         <div class="capture-buttons">
-                                            <button type="button" class="btn btn-primary" id="capturePhoto">Take
-                                                Photo</button>
+                                            <button type="button" class="btn btn-primary" id="startCamera">Start
+                                                Camera</button>
+                                            <button type="button" class="btn btn-primary" id="capturePhoto"
+                                                style="display:none;">Take Photo</button>
                                             <button type="button" class="btn btn-success" id="savePhoto"
                                                 style="display:none;">Save Photo</button>
+                                            <button type="button" class="btn btn-danger" id="retakePhoto"
+                                                style="display:none;">Retake</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        @endif
 
-                        <div class="row mt-4">
+                        {{-- <div class="row mt-4">
                             <div class="col-12 text-center">
                                 <button type="submit" class="btn btn-primary btn-lg">Submit Event Closure</button>
                             </div>
-                        </div>
+                        </div> --}}
                         @endif
                     </form>
                 </div>
             </div>
-            @endif
+            {{-- @endif --}}
         </div>
     </div>
 </div>
@@ -215,7 +247,9 @@
             return;
         }
 
-        const signatureData = signaturePad.toDataURL();
+        const signatureData = signaturePad.toDataURL('image/png');
+        const timestamp = new Date().getTime();
+        const filename = `signature_${timestamp}.png`;
         
         // Send to server
         fetch('/save-signature', {
@@ -226,7 +260,8 @@
             },
             body: JSON.stringify({
                 event_id: '{{ $event->id }}',
-                signature: signatureData
+                signature: signatureData,
+                filename: filename
             })
         })
         .then(response => response.json())
@@ -245,39 +280,79 @@
 
     // Camera functionality
     const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
+    const photoCanvas = document.getElementById('canvas');
     const photo = document.getElementById('photo');
+    const startCameraBtn = document.getElementById('startCamera');
     const captureButton = document.getElementById('capturePhoto');
     const saveButton = document.getElementById('savePhoto');
+    const retakeButton = document.getElementById('retakePhoto');
     let stream = null;
 
-    // Access camera
-    async function startCamera() {
+    // Start camera button click handler
+    startCameraBtn.addEventListener('click', async function() {
         try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'environment'
+                } 
+            });
             video.srcObject = stream;
+            video.style.display = 'block';
+            photo.style.display = 'none';
+            startCameraBtn.style.display = 'none';
+            captureButton.style.display = 'inline-block';
+            retakeButton.style.display = 'none';
+            saveButton.style.display = 'none';
         } catch (err) {
             console.error('Error accessing camera:', err);
             alert('Error accessing camera. Please make sure you have granted camera permissions.');
         }
-    }
-
-    // Start camera when page loads
-    startCamera();
+    });
 
     // Capture photo
     captureButton.addEventListener('click', function() {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
-        photo.src = canvas.toDataURL('image/png');
+        photoCanvas.width = video.videoWidth;
+        photoCanvas.height = video.videoHeight;
+        photoCanvas.getContext('2d').drawImage(video, 0, 0);
+        
+        photo.src = photoCanvas.toDataURL('image/png');
+        video.style.display = 'none';
         photo.style.display = 'block';
-        saveButton.style.display = 'block';
+        captureButton.style.display = 'none';
+        saveButton.style.display = 'inline-block';
+        retakeButton.style.display = 'inline-block';
+
+        // Stop camera stream
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+    });
+
+    // Retake photo
+    retakeButton.addEventListener('click', async function() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'environment'
+                } 
+            });
+            video.srcObject = stream;
+            video.style.display = 'block';
+            photo.style.display = 'none';
+            captureButton.style.display = 'inline-block';
+            saveButton.style.display = 'none';
+            retakeButton.style.display = 'none';
+        } catch (err) {
+            console.error('Error accessing camera:', err);
+            alert('Error accessing camera. Please make sure you have granted camera permissions.');
+        }
     });
 
     // Save photo
     saveButton.addEventListener('click', function() {
-        const photoData = canvas.toDataURL('image/png');
+        const timestamp = new Date().getTime();
+        const filename = `event_photo_${timestamp}.png`;
+        const photoData = photoCanvas.toDataURL('image/png');
         
         fetch('/save-photo', {
             method: 'POST',
@@ -287,20 +362,26 @@
             },
             body: JSON.stringify({
                 event_id: '{{ $event->id }}',
-                photo: photoData
+                photo: photoData,
+                filename: filename
             })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 alert('Photo saved successfully');
+                // Reset camera UI
+                startCameraBtn.style.display = 'inline-block';
+                captureButton.style.display = 'none';
+                saveButton.style.display = 'none';
+                retakeButton.style.display = 'none';
             } else {
-                alert('Error saving photo');
+                alert('Error saving photo: ' + (data.message || 'Unknown error'));
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error saving photo');
+            alert('Error saving photo: ' + error.message);
         });
     });
 

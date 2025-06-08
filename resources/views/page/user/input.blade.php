@@ -1,6 +1,6 @@
 @extends('layouts.index')
 @push('css')
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+
 <link rel="stylesheet" href="/resources/demos/style.css">
 
 @endpush
@@ -9,7 +9,7 @@
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header" style="font-weight: 600; color: #000;">{{ __('Input Product') }}
+                <div class="card-header" style="font-weight: 600; color: #000;">{{ __('Input User') }}
                 </div>
                 {{-- product_code
 product_name
@@ -40,17 +40,24 @@ consumable --}}
                         </div><label for="role" class="form-label text-capitalize">role</label>
                         <select class="form-select form-select-lg mb-3" id="role" name="role" aria-label="role">
                             {{-- <option selected>Status</option> --}}
+                            @if (Auth::user()->role == 'super_user')
+                            <option class="text-capitalize" value="super_user">Super User</option>
+                            @endif
+                            @if (Auth::user()->role == 'owner' || Auth::user()->role == 'super_user')
+                            <option class="text-capitalize" value="owner">Owner</option>
+                            @endif
                             <option class="text-capitalize" value="admin">Admin</option>
-                            <option class="text-capitalize" value="staff gudang">Staff Gudang</option>
+                            <option class="text-capitalize" value="gudang">gudang</option>
                             <option class="text-capitalize" value="staff">Staff</option>
                             <option class="text-capitalize" value="user">User</option>
                             {{-- <option value="Lost">Lost</option> --}}
                         </select><label for="status" class="form-label text-capitalize">status</label>
-                        <select class="form-select text-capitalize form-select-lg mb-3" id="status" name="status" aria-label="Status">
+                        <select class="form-select text-capitalize form-select-lg mb-3" id="status" name="status"
+                            aria-label="Status">
                             {{-- <option selected>Status</option> --}}
                             <option class="text-capitalize" value="aktif">Active</option>
                             <option class="text-capitalize" value="inactive">Inactive</option>
-                            {{-- <option class="text-capitalize" value="staff gudang">Staff Gudang</option>
+                            {{-- <option class="text-capitalize" value="gudang">gudang</option>
                             <option class="text-capitalize" value="staff">Staff</option> --}}
                             {{-- <option value="Lost">Lost</option> --}}
                         </select>

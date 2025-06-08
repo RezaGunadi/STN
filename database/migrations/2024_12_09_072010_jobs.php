@@ -21,7 +21,9 @@ class Jobs extends Migration
             $table->string('lng')->nullable();
             $table->integer('total_price')->default(0);
             $table->integer('price_before_discount')->default(0);
+            $table->integer('total_price_before_discount')->default(0);
             $table->integer('discount')->default(0);
+            $table->integer('total_discount')->default(0);
             $table->integer('additional_price')->default(0);
             $table->integer('starter_user_id')->default(0);
             $table->integer('closer_user_id')->default(0);
@@ -31,8 +33,8 @@ class Jobs extends Migration
             $table->string('user_province')->nullable();
             $table->string('user_address')->nullable();
             $table->string('client');
-            $table->text('signature');
-            $table->text('signature_picture');
+            $table->text('signature')->nullable();
+            $table->text('signature_picture')->nullable();
             $table->dateTime('start_date')->nullable();
             $table->dateTime('finish_date')->nullable();
             // $table->foreign('starter_user_id')->references('id')->on('users');

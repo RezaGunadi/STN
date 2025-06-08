@@ -39,4 +39,9 @@ class JobDetailsDB extends Authenticatable
     {
         return $this->belongsTo(User::class, 'starter_user_id');
     }
+
+    public function history()
+    {
+        return $this->belongsTo(JobDetailHistoryDB::class, 'job_detail_id');
+    }
 }

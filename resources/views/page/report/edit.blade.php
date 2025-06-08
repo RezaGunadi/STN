@@ -1,6 +1,6 @@
 @extends('layouts.index')
 @push('css')
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+
 <link rel="stylesheet" href="/resources/demos/style.css">
 
 @endpush
@@ -43,7 +43,7 @@ consumable --}}
                     </span>
                     @enderror
                 </div> --}}
-                @if (Auth::user()->role=='owner' || Auth::user()->role == 'admin' || Auth::user()->role == 'ADMIN')
+                @if (Auth::user()->role=='owner' || Auth::user()->role == 'admin' || Auth::user()->role == 'ADMIN' || Auth::user()->role == 'super_user')
 
                 <div class="mb-3">
                     <label for="description" class="form-label text-capitalize">description</label>

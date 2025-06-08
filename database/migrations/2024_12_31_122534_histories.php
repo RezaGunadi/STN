@@ -19,6 +19,7 @@ class Histories extends Migration
             $table->bigInteger('ref_id');
             $table->bigInteger('created_by')->default(0);
             $table->text('desc');
+            $table->text('data');
             $table->timestamps();
             $table->softDeletes();
         });

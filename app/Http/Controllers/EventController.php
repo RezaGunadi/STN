@@ -19,6 +19,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Product;
 use Report;
+use Teams;
+use Illuminate\Support\Facades\Validator;
+use App\Helpers\ToastHelper;
 
 class EventController extends Controller
 {
@@ -84,6 +87,18 @@ class EventController extends Controller
                 $result = $result->where('closer_user_id', $userIds);
             }
         }
+        if (array_key_exists('starter_team', $data)) {
+            if ($data['starter_team'] != '') {
+                $teamIds = TeamsDB::where('name', 'LIKE', "%$request->starter_team%")->pluck('id')->toArray();
+                $result = $result->whereIn('starter_team_id', $teamIds);
+            }
+        }
+        if (array_key_exists('closer_team', $data)) {
+            if ($data['closer_team'] != '') {
+                $teamIds = TeamsDB::where('name', 'LIKE', "%$request->closer_team%")->pluck('id')->toArray();
+                $result = $result->whereIn('closer_team_id', $teamIds);
+            }
+        }
         if (array_key_exists('client', $data)) {
             $result = $result->where('client', 'LIKE', '%' . $data['client'] . '%');
         }
@@ -132,247 +147,62 @@ class EventController extends Controller
     public function submit(Request $request)
     {
         $data = $request->all();
-        if ($request->has('item_id')) {
-            if (count($request->item_id) > 0) {
-                # code...
-                $itemId = array_values($request->item_id);
+
+        // Create new event
+        $event = new JobsDB();
+        $event->event_name = $data['event_name'];
+        $event->event_location = $data['event_location'];
+        $event->client = $data['client'];
+        $event->start_date = Carbon::createFromFormat('m/d/Y', $data['date'])->format('Y-m-d');
+        $event->starter_team_id = $data['starter_team'];
+        $event->starter_user_id = 0;
+        $event->closer_user_id = 0;
+        $event->closer_team_id = $data['closer_team'];
+        $event->created_by = Auth::user()->id;
+        $event->save();
+
+        $totalPrice = 0;
+        $totalDiscount = 0;
+        $totalPriceBeforeDiscount = 0;
+        // Create job details for products
+        if (isset($data['product_id'])) {
+            foreach ($data['product_id'] as $key => $productId) {
+                $discount = isset($data['discount'][$productId]) ? $data['discount'][$productId] : 0;
+                $product = ProductDB::where('id', $productId)->first();
+                $jobDetail = new JobDetailsDB();
+                $jobDetail->event_id = $event->id;
+                $jobDetail->created_by = Auth::user()->id;
+                $jobDetail->id_product = $productId;
+                $jobDetail->total_price = $product->rental_price - $discount;
+                $jobDetail->price_before_discount = $product->rental_price;
+                $jobDetail->discount = $discount;
+                $jobDetail->save();
+
+                $totalPrice += $jobDetail->total_price;
+                $totalDiscount += $jobDetail->discount;
+                $totalPriceBeforeDiscount += $jobDetail->price_before_discount;
             }
         }
-        $ip = request()->ip();
-        $ip = '72.14.201.145';           // something like 127.0.0.1
-        $url = "http://ip-api.com/json/" . $ip;    // http://ip-api.com/127.0.0.1
-        $ipResult = Http::get($url);
-        $data['ip'] = json_decode($ipResult->body());
-        $data['lat'] = $data['ip']->city;
-        $isEdit = false;;
-        if ($request->has('event_id')) {
-            if ($request->event_id != 0) {
-                $isEdit = true;
-                $job = JobsDB::where('id', $request->event_id)->first();
-                $additionalData = clone $job;
-                $additionalData = $additionalData->toArray();
+        $event->total_price = $totalPrice;
+        $event->discount = $totalDiscount;
+        $event->price_before_discount = $totalPriceBeforeDiscount;
+        $event->save();
+        // Create history entry for event creation
+        $history = new HistoriesDB();
+        $history->input(
+            $event->id,
+            'event',
+            'create',
+            '',
+            json_encode($event->toArray()),
+            'all',
+            $event->toArray()
+        );
 
-
-
-                $history = new HistoriesDB();
-                $old = '';
-                $new = '';
-                $column = '';
-                $parameter = [
-                    'id' => $additionalData['id'],
-                    'event_name' => $additionalData['event_name'],
-                    'event_location' => $additionalData['event_location'],
-                    'client' => $additionalData['client'],
-                    'lat' => $additionalData['lat'],
-                    'lng' => $additionalData['lng'],
-                    'starter_user_id' => $additionalData['starter_user_id'],
-                    'closer_user_id' => $additionalData['closer_user_id'],
-                    'user_city' => $additionalData['user_city'],
-                    'user_province' => $additionalData['user_province'],
-                    'user_address' => $additionalData['user_address'],
-                    'start_date' => $additionalData['start_date'],
-                    'finish_date' => $additionalData['finish_date'],
-                ];
-
-                if ($additionalData['event_name'] != $data['event_name']) {
-                    $column = 'nama event';
-                    $old = $additionalData['event_name'];
-                    $new = $data['event_name'];
-                    $history->input($additionalData['id'], 'event', 'update', $old, $new, $column, $parameter);
-                }
-                if ($additionalData['event_location'] != $data['event_location']) {
-                    $column = 'lokasi event';
-                    $old = $additionalData['event_location'];
-                    $new = $data['event_location'];
-                    $history->input($additionalData['id'], 'event', 'update', $old, $new, $column, $parameter);
-                }
-                if ($additionalData['client'] != $data['client']) {
-                    $column = 'nama client';
-                    $old = $additionalData['client'];
-                    $new = $data['client'];
-                    $history->input($additionalData['id'], 'event', 'update', $old, $new, $column, $parameter);
-                }
-
-                // $jobs = JobDetailsDB::where('id', $request->event_id)->get();
-                // foreach ($jobs as $job) {
-                //     $additionalData = clone $job;
-                //     $additionalData = $additionalData->toArray();
-
-
-
-                //     $history = new HistoriesDB();
-                //     $old = '';
-                //     $new = '';
-                //     $column = '';
-                //     $parameter = [
-                //         'id' => $additionalData['id'],
-                //         'job_detail_id' => $additionalData['id'],
-                //         'id_product' => $additionalData['id_product'],
-                //         'lat_user' => $additionalData['lat_user'],
-                //         'lng_user' => $additionalData['lng_user'],
-                //         'event_id' => $additionalData['event_id'],
-                //         'created_by' => $additionalData['created_by'],
-                //         'updated_by' => $additionalData['updated_by'],
-                //         'deleted_by' => $additionalData['deleted_by'],
-                //     ];
-
-                //         $column = '';
-                //         $old = '';
-                //         $new = '';
-                //         $history->input($additionalData['id'], 'event_detail', 'update', $old, $new, $column, $parameter);
-                //         # code...
-                // }
-            } else {
-                $job = new JobsDB();
-                $checkEvent = JobsDB::where('event_name', $data['event_name'])->first();
-                return Redirect::back()->with('error', 'Nama event tidak boleh sama');
-            }
-        } else {
-            $job = new JobsDB();
-            $checkEvent = JobsDB::where('event_name', $data['event_name'])->first();
-            if ($checkEvent) {
-                return Redirect::back()->with('error', 'Nama event tidak boleh sama');
-            }
-        }
-
-        $job->event_name = $data['event_name'];
-        $job->event_location = $data['event_location'];
-        $job->lat = $data['ip']->lat;
-        $job->lng = $data['ip']->lon;
-        $job->starter_user_id = Auth::user()->id;
-        $job->created_by = Auth::user()->id;
-        $job->user_city = $data['ip']->city;
-        $job->user_province = $data['ip']->regionName;
-        $job->user_address = $data['ip']->city . ' ' . $data['ip']->regionName . ', ' . $data['ip']->country;
-        $job->client = $data['client'];
-
-        // Handle starter team and closer team if provided
-        if (isset($data['starter_team']) && !empty($data['starter_team'])) {
-            $job->starter_team_id = $data['starter_team'];
-        }
-
-        if (isset($data['closer_team']) && !empty($data['closer_team'])) {
-            $job->closer_team_id = $data['closer_team'];
-        }
-
-        if ($isEdit) {
-            # code...
-            $job->start_date = now();
-            $job->closer_user_id = 0;
-            $job->deleted_by = 0;
-            $job->updated_by = Auth::user()->id;
-        }
-        // $job->finish_date= $request->;
-        $job->save();
-
-        // Process products and their discounts
-        if ($request->has('item_id')) {
-            # code...
-            foreach ($request->item_id as $value) {
-                # code...
-                $checkJob = JobDetailsDB::where('id_product', $value)->where('event_id', $job->id)->first();
-                $theProduct = ProductDB::where('id', $value)->first();
-                if (!$checkJob) {
-                    # code...
-                    $jobDetail = new JobDetailsDB();
-                    $jobDetail->id_product = $value;
-                    $jobDetail->lat_user = $data['ip']->lat;
-                    $jobDetail->lng_user = $data['ip']->lon;
-                    $jobDetail->event_id = $job->id;
-                    $jobDetail->created_by = Auth::user()->id;
-                    $jobDetail->deleted_by = 0;
-                    $jobDetail->updated_by = Auth::user()->id;
-                    $discount = 0;
-                    // Set discount for this product if provided
-                    if (isset($data['discount'][$value]) && !empty($data['discount'][$value])) {
-                        $jobDetail->discount = $data['discount'][$value];
-                        $discount = $data['discount'][$value];
-                    }
-                    $jobDetail->price_before_discount = $theProduct->rental_price;
-                    $jobDetail->total_price = $theProduct->rental_price - $discount;
-
-                    $jobDetail->save();
-                    $product = ProductDB::where('id', $value)->first();
-                    $product->event_id = $job->id;
-                    $product->save();
-
-                    $additionalData = clone $jobDetail;
-                    $additionalData = $additionalData->toArray();
-
-
-
-                    $history = new HistoriesDB();
-                    $old = '';
-                    $new = '';
-                    $column = '';
-                    $parameter = [
-                        'id' => $additionalData['id'],
-                        'job_detail_id' => $additionalData['id'],
-                        'id_product' => $additionalData['id_product'],
-                        'lat_user' => $additionalData['lat_user'],
-                        'lng_user' => $additionalData['lng_user'],
-                        'event_id' => $additionalData['event_id'],
-                        'created_by' => $additionalData['created_by'],
-                        'updated_by' => $additionalData['updated_by'],
-                        'deleted_by' => $additionalData['deleted_by'],
-                    ];
-
-                    $column = '';
-                    $old = '';
-                    $new = '';
-                    $history->input($additionalData['id'], 'event_detail', 'update', $old, $new, $column, $parameter);
-                } else {
-                    // Update existing job detail with new discount if provided
-                    if (isset($data['discount'][$value]) && !empty($data['discount'][$value])) {
-                        $checkJob->discount = $data['discount'][$value];
-                        $checkJob->updated_by = Auth::user()->id;
-                        $discount = $data['discount'][$value];
-                        $checkJob->price_before_discount = $theProduct->rental_price;
-                        $checkJob->total_price = $theProduct->rental_price - $data['discount'][$value];
-                        $checkJob->save();
-                    }
-                }
-            }
-            $jobDetails = JobDetailsDB::where('event_id', $job->id)->get();
-            foreach ($jobDetails as  $jobDetail) {
-                # code...
-                JobsDB::where('id', $job->id)->update([
-                    'total_price' => $job->total_price + $jobDetail->total_price,
-                    'price_before_discount' => $job->price_before_discount + $jobDetail->price_before_discount,
-                    'discount' => $job->discount + $discount,
-                ]);
-            }
-        }
-
-
-        //   "_token" => "bGiRinOMzdhPn77BWyk6e4CuVpoKSfPb9mw69Psd"
-        //   "event_name" => "Fun"
-        //   "event_location" => "Dufan"
-        //   "client" => "PT. XYZ"
-        //   "item_id" => array:1 [▼
-        //     0 => "3"
-        //   ]
-        //   "ip" => {#351 ▼
-        //     +"status": "success"
-        //     +"country": "Indonesia"
-        //     +"countryCode": "ID"
-        //     +"region": "JK"
-        //     +"regionName": "Jakarta"
-        //     +"city": "Jakarta"
-        //     +"zip": ""
-        //     +"lat": -6.19445
-        //     +"lon": 106.823
-        //     +"timezone": "Asia/Jakarta"
-        //     +"isp": "Google LLC"
-        //     +"org": "Google Chrome Prefetch Proxy"
-        //     +"as": "AS15169 Google LLC"
-        //     +"query": "72.14.201.145"
-        //   }
-        //   "lat" => "Jakarta"
-
-        // dd($data);
-        return redirect(URL::To('/list-event'))->with('success', $isEdit ? 'Berhasil mengubah event' : 'Berhasil menambahkan event');
+        ToastHelper::success('Berhasil menambahkan event baru');
+        return redirect(URL::To('/list-event'));
     }
+
     public function submitClose(Request $request)
     {
         try {
@@ -382,7 +212,9 @@ class EventController extends Controller
             $isCloserTeamMember = TeamsDB::where('group_id', $event->closer_team_id)
                 ->where('user_id', Auth::id())
                 ->exists();
-
+            if (Auth::user()->role == 'super_user' || Auth::user()->role == 'owner') {
+                $isCloserTeamMember = true;
+            }
             if (!$isCloserTeamMember) {
                 return redirect()->back()->with('error', 'You are not authorized to close this event.');
             }
@@ -401,10 +233,15 @@ class EventController extends Controller
             foreach ($products as $product) {
                 $status = $request->input("item_id.{$product->id}");
 
-                if ($status === 'ada' || $status === 'return') {
+                if ($status === 'ada' || $status === 'return' || $product->is_consumable == 1) {
                     // Product is present or returned - move to closer team
                     $product->event_id = 0;
-                    $product->user_id = Auth::id(); // Assign to the closer who submitted
+                    if ($status === 'ada' || $status === 'return') {
+                        # code...
+                        $product->user_id = Auth::id(); // Assign to the closer who submitted
+                    } else {
+                        $product->status = 'Consumed';
+                    }
                     $product->save();
                 } else {
                     // Product is lost/consumed - create report entries
@@ -417,6 +254,7 @@ class EventController extends Controller
                         $report->price = $pricePerPerson;
                         $report->note = "Product {$status} during event {$event->event_name}";
                         $report->reporter_id = Auth::id();
+                        $report->created_by = Auth::id();
                         $report->user_id = $member->user_id;
                         $report->save();
 
@@ -442,8 +280,100 @@ class EventController extends Controller
             return redirect()->back()->with('error', 'Error closing event: ' . $e->getMessage());
         }
     }
+
+    public function finalizeSubmitEvent(Request $request)
+    {
+        try {
+            // Validate request
+            $validator = Validator::make($request->all(), [
+                'event_id' => 'required',
+                'event_name' => 'required',
+                'event_location' => 'required',
+                'client' => 'required',
+                'product_images.*' => 'image|mimes:jpeg,png,jpg|max:5120'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $jobDetails = JobDetailsDB::where('event_id', $request->event_id)->get();
+            $history = new HistoriesDB();
+
+            // Process each product image
+            foreach ($request->product_images as $productId => $image) {
+                $detail = $jobDetails->where('id_product', $productId)->first();
+
+                if ($detail) {
+                    // Generate unique filename
+                    $filename = time() . '_' . $productId . '.' . $image->getClientOriginalExtension();
+
+                    // Create directory if it doesn't exist
+                    $directory = public_path('upload/event/product_picture');
+                    if (!file_exists($directory)) {
+                        mkdir($directory, 0777, true);
+                    }
+
+                    // Save image
+                    $image->move($directory, $filename);
+                    $imagePath = 'upload/event/product_picture/' . $filename;
+
+                    // Track old values for history
+                    $oldPicture = $detail->picture;
+                    $oldIsInstalled = $detail->is_installed;
+
+                    // Update job detail
+                    $detail->picture = $imagePath;
+                    $detail->is_installed = 1;
+                    $detail->save();
+
+                    // Create history entries
+                    $additionalData = $detail->toArray();
+
+                    // Track picture change
+                    if ($oldPicture !== $imagePath) {
+                        $history->input(
+                            $detail->id,
+                            'event_detail',
+                            'update',
+                            $oldPicture,
+                            $imagePath,
+                            'picture',
+                            $additionalData
+                        );
+                    }
+
+                    // Track installation status change
+                    if ($oldIsInstalled !== 1) {
+                        $history->input(
+                            $detail->id,
+                            'event_detail',
+                            'update',
+                            $oldIsInstalled,
+                            1,
+                            'is_installed',
+                            $additionalData
+                        );
+                    }
+                }
+            }
+            ToastHelper::success('Images uploaded successfully');
+            return redirect()->back();
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error uploading images: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function input()
     {
+        \Illuminate\Support\Facades\DB::statement("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));");
         // Only load available products (not deleted and not assigned to an event)
         $data = ProductDB::where('deleted_at', NULL)
             ->where(function ($query) {
@@ -454,70 +384,127 @@ class EventController extends Controller
 
         // Load teams with their members in a single query using eager loading
         $teams = TeamsDB::where('deleted_at', NULL)
-            ->with(['user' => function ($query) {
-                $query->select('id', 'name', 'email', 'phone');
-            }])
-            ->get()
-            ->groupBy('group_id');
+            // ->with(['user' => function ($query) {
+            //     $query->select('id', 'name', 'email', 'phone');
+            // }])
+            ->groupBy('group_id')
+            ->get();
 
         // Transform the teams data to include members
-        $teamsData = [];
-        foreach ($teams as $group_id => $teamMembers) {
-            $teamsData[] = [
-                'group_id' => $group_id,
-                'member' => $teamMembers
-            ];
+        // $teamsData = [];
+        foreach ($teams as $team) {
+            $team->member = TeamsDB::where('group_id', $team->group_id)->join('users', 'users.id', '=', 'teams.user_id')->select('users.id', 'users.name', 'users.email', 'users.phone')->get();
+            //     $teamsData[] = [
+            //         'group_id' => $group_id,
+            //         'member' => $teamMembers
+            //     ];
         }
         $user = User::where('deleted_at', NULL)->get();
         return view('page.event.input', [
             'data' => $data,
-            'teams' => $teamsData,
+            'teams' => $teams,
             'user' => $user,
             'title' => 'event',
             'event' => null
         ]);
     }
+
     public function close($id)
     {
         $event = JobsDB::findOrFail($id);
-        $products = ProductDB::where('event_id', $id)->get();
+
+        // Check if user is in the closer team
+        $isCloserTeamMember = TeamsDB::where('group_id', $event->closer_team_id)
+            ->where('user_id', Auth::id())
+            ->exists();
+
+            if (Auth::user()->role == 'super_user' || Auth::user()->role == 'owner') {
+                $isCloserTeamMember = true;
+            }
+        if (!$isCloserTeamMember) {
+            return redirect()->back()->with('error', 'You are not authorized to close this event.');
+        }
+
+        $products = ProductDB::where('job_details.event_id', $id)->join('job_details', 'job_details.id_product', '=', 'product.id')
+            ->select('product.*', 'job_details.picture as job_detail_picture')
+            ->get();
 
         // Check if current user is in the closer team
         $isCloserTeamMember = TeamsDB::where('group_id', $event->closer_team_id)
             ->where('user_id', Auth::id())
             ->exists();
+
+            if (Auth::user()->role == 'super_user' || Auth::user()->role == 'owner') {
+                $isCloserTeamMember = true;
+            }
+            $isStarterTeamMember = TeamsDB::where('group_id', $event->starter_team_id)
+            ->where('user_id', Auth::id())
+            ->exists();
+            if (Auth::user()->role == 'super_user' || Auth::user()->role == 'owner') {
+                $isStarterTeamMember = true;
+            }
 
         return view('page.event.close', [
             'data' => $products,
             'title' => 'event',
             'event' => $event,
-            'isCloserTeamMember' => $isCloserTeamMember
+            'isCloserTeamMember' => $isCloserTeamMember,
+            'isStarterTeamMember' => $isStarterTeamMember
         ]);
     }
+
     public function edit($id)
     {
-        $event = JobsDB::where('id', $id)->first();
-        $product = ProductDB::where('user_id', Auth::user()->id)->where(function ($q) use ($id) {
-            $q = $q->where('event_id', $id)->orWhere('event_id', 0);
-        })
+
+        \Illuminate\Support\Facades\DB::statement("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));");
+        // Load teams with their members in a single query using eager loading
+        $teams = TeamsDB::where('deleted_at', NULL)
+            // ->with(['user' => function ($query) {
+            //     $query->select('id', 'name', 'email', 'phone');
+            // }])
+            ->groupBy('group_id')
             ->get();
-        return view('page.event.edit', ['data' => $product, 'title' => 'event', 'event' => $event]);
+        $event = JobsDB::where('id', $id)->first();
+        // $jobDetail = JobDetailsDB::where('event_id', $id)->pluck('id_product');
+        $jobDetail = ProductDB::
+        join('job_details', 'job_details.id_product', '=', 'product.id')
+        ->where('job_details.event_id', $id)
+        ->select('product.*', 'job_details.picture as job_detail_picture')
+        ->get();
+        return view('page.event.edit', ['eventDetail' => $jobDetail, 'title' => 'event', 'event' => $event, 'teams' => $teams]);
     }
+
     public function detail($id)
     {
-        $event = JobsDB::findOrFail($id);
-        $products = ProductDB::where('event_id', $id)->get();
+        \Illuminate\Support\Facades\DB::statement("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));");
+        $event = JobsDB::where('id', $id)->first();
+        // $products = ProductDB::where('event_id', $id)->get();
+        $products = ProductDB::where('job_details.event_id', $id)
+            ->join('job_details', 'job_details.id_product', '=', 'product.id')
+            ->groupBy('product.id')
+            ->select('product.*', 'job_details.is_installed', 'job_details.picture as picture')->get();
 
         // Check if current user is in the closer team
         $isCloserTeamMember = TeamsDB::where('group_id', $event->closer_team_id)
             ->where('user_id', Auth::id())
             ->exists();
+            
+            if (Auth::user()->role == 'super_user' || Auth::user()->role == 'owner') {
+                $isCloserTeamMember = true;
+            }
+            $isStarterTeamMember = TeamsDB::where('group_id', $event->starter_team_id)
+            ->where('user_id', Auth::id())
+            ->exists();
+            if (Auth::user()->role == 'super_user' || Auth::user()->role == 'owner') {
+                $isStarterTeamMember = true;
+            }
 
         return view('page.event.detail', [
             'data' => $products,
             'title' => 'event',
             'event' => $event,
-            'isCloserTeamMember' => $isCloserTeamMember
+            'isCloserTeamMember' => $isCloserTeamMember,
+            'isStarterTeamMember' => $isStarterTeamMember   
         ]);
     }
 
@@ -855,15 +842,19 @@ class EventController extends Controller
         return redirect(URL::To('/list-product'))->with('success', 'Berhasil mengubah data event');
     }
 
-    public function startEvent(Request $request)
+    public function startEvent(Request $request, $id)
     {
-        $event = JobsDB::findOrFail($request->event_id);
+        \Illuminate\Support\Facades\DB::statement("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));");
+        $event = JobsDB::findOrFail($id);
 
         // Check if user is in the starter team
         $starterTeam = TeamsDB::where('group_id', $event->starter_team_id)
             ->where('user_id', Auth::id())
             ->first();
 
+            if (Auth::user()->role == 'super_user' || Auth::user()->role == 'owner') {
+                $starterTeam = true;
+            }
         if (!$starterTeam) {
             return response()->json([
                 'success' => false,
@@ -872,26 +863,41 @@ class EventController extends Controller
         }
 
         // Check if event is already started
-        if ($event->start_date) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This event has already been started.'
-            ], 400);
-        }
+        // if ($event->start_date) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'This event has already been started.'
+        //     ], 400);
+        // }
 
         // Start the event
-        $event->start_date = now();
-        $event->starter_user_id = Auth::id();
-        $event->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Event started successfully'
-        ]);
+        if ($event->start_date == NULL) {
+            $event->start_date = now();
+            $event->starter_user_id = Auth::id();
+            $event->save();
+        }
+        // $jobDetail = JobDetailsDB::where('event_id', $event->id)->get();
+        // $event->job_detail = $jobDetail;
+        // $arrayProduct = [];
+        // foreach ($jobDetail as $item) {
+        //     $arrayProduct[] = $item->id_product;
+        // }
+        $data = ProductDB::where('job_details.event_id', $event->id)
+            ->join('job_details', 'job_details.id_product', '=', 'product.id')
+            ->groupBy('product.id')
+            ->select('product.*', 'job_details.is_installed', 'job_details.picture as job_detail_picture')->get();
+        $event->products = $data;
+        return view('page.event.start', ['event' => $event, 'data' => $data, 'number' => 0, 'title' => 'event']);
+        // return redirect()->back()->with('success', 'Event started successfully');
+        // return response()->json([
+        //     'success' => true,
+        //     'message' => 'Event started successfully'
+        // ]);
     }
 
     public function closeEvent(Request $request)
     {
+        \Illuminate\Support\Facades\DB::statement("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));");
         try {
             $event = JobsDB::findOrFail($request->event_id);
 
@@ -900,12 +906,20 @@ class EventController extends Controller
                 ->where('user_id', Auth::id())
                 ->exists();
 
+            if (Auth::user()->role == 'super_user' || Auth::user()->role == 'owner') {
+                $isCloserTeamMember = true;
+            }
             if (!$isCloserTeamMember) {
                 return redirect()->back()->with('error', 'You are not authorized to close this event.');
             }
 
             // Get all products for this event
-            $products = ProductDB::where('event_id', $event->id)->get();
+            // $products = ProductDB::where('event_id', $event->id)->get();
+
+            $products = ProductDB::where('job_details.event_id', $event->id)
+                ->join('job_details', 'job_details.id_product', '=', 'product.id')
+                ->groupBy('product.id')
+                ->select('product.*', 'job_details.is_installed', 'job_details.picture as job_detail_picture')->get();
 
             // Get starter team members
             $starterTeamMembers = TeamsDB::where('group_id', $event->starter_team_id)
@@ -932,6 +946,7 @@ class EventController extends Controller
                         $report->price = $pricePerPerson;
                         $report->note = "Product lost during event {$event->event_name}";
                         $report->reporter_id = Auth::id();
+                        $report->created_by = Auth::id();
                         $report->user_id = $member->user_id;
                         $report->save();
 
@@ -952,78 +967,248 @@ class EventController extends Controller
             $event->closer_user_id = Auth::id();
             $event->save();
 
-            return redirect()->route('list_event')->with('success', 'Event closed successfully');
+            // $history = new HistoriesDB();
+            // $history->input(
+            //     $event->id,
+            //     'event',
+            //     'update',
+            //     $event->finish_date,
+            //     $event->finish_date,
+            //     'finish_date',
+            //     $event->toArray()
+            // );
+            ToastHelper::success('Event closed successfully');
+            return redirect()->route('list_event');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error closing event: ' . $e->getMessage());
+            Log::error('Error closing event: ' . $e->getMessage());
+            ToastHelper::error('Error closing event: ' . $e->getMessage());
+            return redirect()->back();
         }
     }
 
-    public function markProductInstalled(Request $request)
+    public function markProductInstalled(Request $request, $id)
     {
-        try {
-            $request->validate([
-                'product_id' => 'required|exists:job_details,id',
-                'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048'
-            ]);
+        $product = ProductDB::findOrFail($id);
 
-            $jobDetail = JobDetailsDB::findOrFail($request->product_id);
+        // Track old values for history
+        $oldIsInstalled = $product->is_installed;
+        $additionalData = $product->toArray();
 
-            // Store the photo
-            $photoPath = $request->file('photo')->store('product_photos', 'public');
+        $product->is_installed = 1;
+        $product->save();
 
-            // Update the job detail
-            $jobDetail->update([
-                'is_installed' => true,
-                'photo_path' => $photoPath,
-                'installed_at' => now()
-            ]);
+        // Create history entry
+        $history = new HistoriesDB();
+        $history->input(
+            $product->id,
+            'product',
+            'update',
+            $oldIsInstalled,
+            1,
+            'is_installed',
+            $additionalData
+        );
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Product marked as installed successfully',
-                'photo_url' => asset('storage/' . $photoPath)
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to mark product as installed: ' . $e->getMessage()
-            ], 500);
-        }
+        return response()->json(['success' => true]);
     }
 
     public function saveSignature(Request $request)
     {
         try {
-            $request->validate([
-                'event_id' => 'required|exists:jobs,id',
-                'signature' => 'required|string'
-            ]);
+            $event = JobsDB::where('id', $request->event_id)->first();
 
-            $event = JobsDB::findOrFail($request->event_id);
-            $event->signature = $request->signature;
+            if (!$event) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Event not found'
+                ], 404);
+            }
+
+            // Track old values for history
+            $oldSignature = $event->signature;
+            $additionalData = $event->toArray();
+
+            // Create directory if it doesn't exist
+            $directory = public_path('upload/event/signature');
+            if (!file_exists($directory)) {
+                mkdir($directory, 0777, true);
+            }
+
+            // Generate unique filename
+            $filename = 'signature_' . time() . '_' . $event->id . '.png';
+            $filepath = $directory . '/' . $filename;
+
+            // Decode base64 image
+            $image_parts = explode(";base64,", $request->signature);
+            $image_base64 = base64_decode($image_parts[1]);
+
+            // Save the image
+            file_put_contents($filepath, $image_base64);
+
+            // Update event with new signature path
+            $event->signature = 'upload/event/signature/' . $filename;
             $event->save();
 
-            return response()->json(['success' => true]);
+            // Create history entry
+            $history = new HistoriesDB();
+            $history->input(
+                $event->id,
+                'event',
+                'update',
+                $oldSignature,
+                $event->signature_picture,
+                'signature_picture',
+                $additionalData
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tanda tangan berhasil disimpan!',
+                'signature_path' => $event->signature_picture
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     public function savePhoto(Request $request)
     {
         try {
-            $request->validate([
-                'event_id' => 'required|exists:jobs,id',
-                'photo' => 'required|string'
-            ]);
+            $event = JobsDB::where('id', $request->event_id)->first();
 
-            $event = JobsDB::findOrFail($request->event_id);
-            $event->signature_picture = $request->photo;
+            if (!$event) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Event not found'
+                ], 404);
+            }
+
+            // Track old values for history
+            $oldPhoto = $event->signature_picture;
+            $additionalData = $event->toArray();
+
+            // Create directory if it doesn't exist
+            $directory = public_path('upload/event/signature');
+            if (!file_exists($directory)) {
+                mkdir($directory, 0777, true);
+            }
+
+            // Generate unique filename
+            $filename = 'event_photo_' . time() . '_' . $event->id . '.png';
+            $filepath = $directory . '/' . $filename;
+
+            // Decode base64 image
+            $image_parts = explode(";base64,", $request->photo);
+            $image_base64 = base64_decode($image_parts[1]);
+
+            // Save the image
+            file_put_contents($filepath, $image_base64);
+
+            // Update event with new photo path
+            $event->signature_picture = 'upload/event/signature/' . $filename;
             $event->save();
 
-            return response()->json(['success' => true]);
+            // Create history entry
+            $history = new HistoriesDB();
+            $history->input(
+                $event->id,
+                'event',
+                'update',
+                $oldPhoto,
+                $event->signature_picture,
+                'signature_picture',
+                $additionalData
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Photo event berhasil disimpan!',
+                'photo_path' => $event->signature_picture
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
         }
+    }
+
+    public function markProductAsInstalled(Request $request)
+    {
+        try {
+            $product = ProductDB::findOrFail($request->product_id);
+
+            // Check if user is in the same team as the product
+            $userTeam = TeamsDB::where('user_id', Auth::id())
+                ->where('group_id', $product->team_id)
+                ->first();
+
+            if (Auth::user()->role == 'super_user' || Auth::user()->role == 'owner') {
+                $userTeam = true;
+            }
+            if (!$userTeam) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not authorized to mark this product as installed'
+                ], 403);
+            }
+
+            // Handle image upload
+            if ($request->hasFile('picture')) {
+                $file = $request->file('picture');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('public/product_images', $filename);
+
+                // Update product status and image path
+                $product->status = 'Installed';
+                $product->image_path = $path;
+                $product->save();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Product marked as installed successfully'
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No image provided'
+            ], 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function closeSubmit(Request $request, $id)
+    {
+        $event = JobsDB::findOrFail($id);
+
+        // Track old values for history
+        $oldData = $event->toArray();
+
+        $event->status = 'closed';
+        $event->updated_by = Auth::user()->id;
+        $event->save();
+
+        // Create history entry for event closure
+        $history = new HistoriesDB();
+        $history->input(
+            $event->id,
+            'event',
+            'update',
+            json_encode($oldData),
+            json_encode($event->toArray()),
+            'status',
+            $oldData
+        );
+
+        ToastHelper::success('Event closed successfully');
+        return redirect(URL::To('/list-event'));
     }
 }

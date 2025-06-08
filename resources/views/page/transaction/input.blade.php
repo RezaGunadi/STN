@@ -1,6 +1,6 @@
 @extends('layouts.index')
 @push('css')
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+
 <link rel="stylesheet" href="/resources/demos/style.css">
 
 @endpush
@@ -41,7 +41,7 @@ consumable --}}
                         <select class="form-select form-select-lg mb-3" id="role" name="role" aria-label="role">
                             {{-- <option selected>Status</option> --}}
                             <option class="text-capitalize" value="admin">admin</option>
-                            <option class="text-capitalize" value="staff gudang">Staff Gudang</option>
+                            <option class="text-capitalize" value="gudang">gudang</option>
                             <option class="text-capitalize" value="staff">Staff</option>
                             {{-- <option value="Lost">Lost</option> --}}
                         </select>
@@ -49,7 +49,7 @@ consumable --}}
                             {{-- <option selected>Status</option> --}}
                             <option class="text-capitalize" value="aktif">aktif</option>
                             <option class="text-capitalize" value="inactive">inactive</option>
-                            {{-- <option class="text-capitalize" value="staff gudang">Staff Gudang</option>
+                            {{-- <option class="text-capitalize" value="gudang">gudang</option>
                             <option class="text-capitalize" value="staff">Staff</option> --}}
                             {{-- <option value="Lost">Lost</option> --}}
                         </select>

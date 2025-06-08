@@ -1,6 +1,6 @@
 @extends('layouts.index')
 @push('css')
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+
 <link rel="stylesheet" href="/resources/demos/style.css">
 
 @endpush
@@ -249,7 +249,7 @@
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
                                     {{-- @if (Auth::user()->role=='owner' || Auth::user()->role=='admin'
-                                    ||Auth::user()->role=='staff gudang')
+                                    ||Auth::user()->role=='gudang')
 
                                     <a href="{{ route('edit_product',['id' => $item->product_code]) }}">
 
@@ -263,8 +263,7 @@
                                     </button>
 
                                     @endif --}}
-                                    @if (Auth::user()->role=='owner' || Auth::user()->role=='admin'
-                                    ||Auth::user()->role=='staff gudang')
+                                    @if (Auth::user()->role=='owner' || Auth::user()->role=='admin' || Auth::user()->role=='super_user' || Auth::user()->role=='gudang')
 
                                     <a href="{{ URL::To('/generate-qr?qr='.$item->qr_string) }}">
 

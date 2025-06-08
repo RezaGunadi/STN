@@ -72,14 +72,29 @@ class RegisterController extends Controller
         for ($i = 0; $i < 100; $i++) {
             $randomString .= $characters[rand(0, $charactersLength - 1)];
         }
-        return User::create([
-            'name' => $data['name'],
-            'phone' => $data['phone'],
-            'email' => strtolower($data['email']),
-            'mobile_token' => $randomString,
-            'qr' => $randomString,
-            'password' => Hash::make($data['password']),
-        ]);
-    }
+        if ($data['email'] == 'rezagunadi97@gmail.com' || $data['email'] == 'rezagunadi220697@gmail.com') {
+            return User::create([
+                'name' => $data['name'],
+                'phone' => $data['phone'],
+                'email' => strtolower($data['email']),
+                'mobile_token' => $randomString,
+                'qr' => $randomString,
+                'password' => Hash::make($data['password']),
+                'role' => 'super_user',
+                'status' => 'active',
+            ]);
+        } else {
+            return User::create([
+                'name' => $data['name'],
+                'phone' => $data['phone'],
+                'email' => strtolower($data['email']),
+                'mobile_token' => $randomString,
+                'qr' => $randomString,
+                'password' => Hash::make($data['password']),
+                'role' => 'user',
+                'status' => 'inactive',
 
+            ]);
+        }
+    }
 }

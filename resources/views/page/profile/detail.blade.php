@@ -178,8 +178,7 @@
                                     {{ $item->finish_date }}</th>
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
-                                    @if (Auth::user()->role=='owner' || Auth::user()->role=='admin' ||
-                                    Auth::user()->role=='staff')
+                                    @if (Auth::user()->role=='owner' || Auth::user()->role=='admin' || Auth::user()->role=='super_user' || Auth::user()->role=='staff')
 
                                     <a href="{{ route('edit_product',['id' => $item->id]) }}">
 
@@ -193,8 +192,7 @@
                                     </button>
 
                                     @endif
-                                    @if (Auth::user()->role=='owner' || Auth::user()->role=='admin'
-                                    ||Auth::user()->role=='staff')
+                                    @if (Auth::user()->role=='owner' || Auth::user()->role=='admin' || Auth::user()->role=='super_user' || Auth::user()->role=='staff')
 
                                     <a href="{{ URL::To('/generate-qr?qr='.$item->qr_string) }}">
 

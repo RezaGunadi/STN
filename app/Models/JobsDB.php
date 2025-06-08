@@ -37,12 +37,34 @@ class JobsDB extends Authenticatable
     {
         return $this->belongsTo(JobHistoryDB::class, 'job_id');
     }
-    public function staterTeam()
+    public function starterTeam()
     {
-        return $this->hasMany(TeamsDB::class, 'starter_team_id');
+        return $this->belongsTo(TeamsDB::class, 'starter_team_id', 'group_id');
     }
     public function closerTeam()
     {
-        return $this->hasMany(TeamsDB::class, 'closer_team_id','group_id');
+        return $this->belongsTo(TeamsDB::class, 'closer_team_id', 'group_id');
+    }
+    public function starterTeams()
+    {
+        return $this->hasMany(TeamsDB::class, 'starter_team_id', 'group_id');
+    }
+    public function closerTeams()
+    {
+        return $this->hasMany(TeamsDB::class, 'closer_team_id', 'group_id');
+    }
+    public function clientData()
+    {
+        return $this->belongsTo(User::class, 'client');
+    }
+
+    public function details()
+    {
+        return $this->hasMany(JobDetailsDB::class, 'event_id');
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
     }
 }

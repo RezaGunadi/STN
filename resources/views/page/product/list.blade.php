@@ -1,7 +1,8 @@
 @extends('layouts.index')
 @push('css')
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
-<link rel="stylesheet" href="/resources/demos/style.css">
+{{-- 
+<link rel="stylesheet" href="/resources/demos/style.css"> --}}
+{{-- <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /> --}}
 <style>
     .view-toggle {
         display: flex;
@@ -374,10 +375,33 @@
         border-radius: 3px;
         font-size: 0.75rem;
     }
+
+    .select2-container {
+        width: 100% !important;
+    }
+
+    .select2-container--default .select2-selection--multiple {
+        border: 1px solid #ced4da;
+        min-height: 38px;
+        padding-top: 0;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #e9ecef;
+        border: 1px solid #ced4da;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field {
+        margin-top: 0;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+        padding-top: 0;
+    }
 </style>
 @endpush
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid mt-5">
     <div class="row">
         <div class="col-12">
             <div class="card">
@@ -385,14 +409,18 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <h3 class="card-title">Product List</h3>
                         <div>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                data-bs-target="#addProductModal">
+                            <a href="{{ route('input_product') }}" class="btn btn-primary">
                                 <i class="fas fa-plus"></i> Add New Product
-                            </button>
-                            <button type="button" class="btn btn-info" data-bs-toggle="modal"
-                                data-bs-target="#filterModal">
-                                <i class="fas fa-filter"></i> Filter
-                            </button>
+                            </a>
+                            {{-- @if(auth()->user()->role === 'owner' || auth()->user()->role === 'admin')
+                            <a href="{{ route('product.transfer.index') }}" class="btn btn-warning">
+                            <i class="fas fa-exchange-alt"></i> Transfer Products
+                            </a>
+                            @endif --}}
+                            <button class="btn btn-info me-2 text-white" id="filter_btn"><i class="bi bi-filter"></i>
+                                Show Filter</button>
+                            <button class="btn btn-secondary d-none text-white" id="filter_btn_hide">Hide
+                                Filter</button>
                             <div class="btn-group ms-2">
                                 <button type="button" class="btn btn-outline-secondary" id="standardViewBtn">
                                     <i class="fas fa-list"></i> Standard View
@@ -401,10 +429,46 @@
                                     <i class="fas fa-th-large"></i> Compact View
                                 </button>
                             </div>
+                            <a href="{{ route('list_management_product') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-gear-fill"></i>
+                            </a>
                         </div>
                     </div>
+
                 </div>
                 <div class="card-body">
+                    <form action="{{ route('list_product') }}" method="GET" id="filterForm" class="d-none mb-4">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="category" class="form-label">Category</label>
+                                <input type="text" class="form-control" id="category" name="category"
+                                    value="{{ request('category') }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="brand" class="form-label">Brand</label>
+                                <input type="text" class="form-control" id="brand" name="brand"
+                                    value="{{ request('brand') }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="type" class="form-label">Type</label>
+                                <input type="text" class="form-control" id="type" name="type"
+                                    value="{{ request('type') }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="product_code" class="form-label">Product Code</label>
+                                <input type="text" class="form-control" id="product_code" name="product_code"
+                                    value="{{ request('product_code') }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="product_name" class="form-label">Product Name</label>
+                                <input type="text" class="form-control" id="product_name" name="product_name"
+                                    value="{{ request('product_name') }}">
+                            </div>
+                            <div class="col-md-4 mb-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100">Apply Filter</button>
+                            </div>
+                        </div>
+                    </form>
                     <!-- Standard View -->
                     <div id="standardView">
                         <div class="table-responsive">
@@ -418,6 +482,8 @@
                                         <th>Brand</th>
                                         <th>Type</th>
                                         <th>Status</th>
+                                        <th>Team</th>
+                                        <th>Event</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -437,15 +503,31 @@
                                             <span class="badge bg-danger">Not Available</span>
                                             @endif
                                         </td>
+                                        <td style="text-align: center;">
+                                            {{ $item->getTeam ? $item->getTeam->name : '-' }}
+                                            {{-- @foreach ($item->getTeams as $team)
+                                            {{ $team->user->name }}
+                                            @endforeach --}}
+                                        </td>
+                                        <td style="text-align: center;">
+                                            {{ $item->getEvent ? $item->getEvent->event_name : '-' }}
+                                            {{-- @foreach ($item->getEvent as $item)
+                                            @endforeach --}}
+                                        </td>
                                         <td>
-                                            <button type="button" class="btn btn-sm btn-info"
-                                                onclick="editProduct({{ $item->id }})">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-danger"
-                                                onclick="deleteProduct({{ $item->id }})">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
+                                            <a href="{{ route('edit_product', $item->id) }}"
+                                                class="btn btn-sm btn-info">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            <form action="{{ route('generate_qr_product') }}" method="GET"
+                                                class="d-inline">
+                                                <input type="hidden" name="qr" value="{{ $item->qr_string }}">
+                                                @csrf
+                                                @method('GET')
+                                                <button type="submit" class="btn btn-sm btn-danger">
+                                                    <i class="bi bi-download"></i>
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                     @endforeach
@@ -498,6 +580,8 @@
                                                         <th>Product Code</th>
                                                         <th>Product Name</th>
                                                         <th>Status</th>
+                                                        {{-- <th>Team</th>
+                                                        <th>Event</th> --}}
                                                         <th>Actions</th>
                                                     </tr>
                                                 </thead>
@@ -513,14 +597,16 @@
                                                             <span class="badge bg-danger">Not Available</span>
                                                             @endif
                                                         </td>
+                                                        {{-- <td>{{ $product->team->name }}</td>
+                                                        <td>{{ $product->event->name }}</td> --}}
                                                         <td>
                                                             <button type="button" class="btn btn-sm btn-info"
                                                                 onclick="editProduct({{ $product->id }})">
-                                                                <i class="fas fa-edit"></i>
+                                                                <i class="bi bi-pencil-square"></i>
                                                             </button>
                                                             <button type="button" class="btn btn-sm btn-danger"
                                                                 onclick="deleteProduct({{ $product->id }})">
-                                                                <i class="fas fa-trash"></i>
+                                                                <i class="bi bi-trash"></i>
                                                             </button>
                                                         </td>
                                                     </tr>
@@ -596,32 +682,34 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="filterForm">
+                <form id="filterForm" method="GET" action="{{ route('list_product') }}">
                     <div class="mb-3">
                         <label class="form-label">Category</label>
-                        <input type="text" class="form-control" name="category">
+                        <input type="text" class="form-control" name="category" value="{{ request('category') }}">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Brand</label>
-                        <input type="text" class="form-control" name="brand">
+                        <input type="text" class="form-control" name="brand" value="{{ request('brand') }}">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Type</label>
-                        <input type="text" class="form-control" name="type">
+                        <input type="text" class="form-control" name="type" value="{{ request('type') }}">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Product Code</label>
-                        <input type="text" class="form-control" name="product_code">
+                        <input type="text" class="form-control" name="product_code"
+                            value="{{ request('product_code') }}">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Product Name</label>
-                        <input type="text" class="form-control" name="product_name">
+                        <input type="text" class="form-control" name="product_name"
+                            value="{{ request('product_name') }}">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Apply Filter</button>
                     </div>
                 </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="applyFilter()">Apply Filter</button>
             </div>
         </div>
     </div>
@@ -630,11 +718,8 @@
 @endsection
 
 @push('script')
+{{-- <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> --}}
 <script>
-    $( function() {
-        $( "#payment_date" ).datepicker();
-    });
-    
     $(document).ready(function() {
         // View toggle functionality
         const standardViewBtn = $('#standardViewBtn');
@@ -671,27 +756,17 @@
             compactView.show();
             localStorage.setItem('productListView', 'compact');
         });
-        
-        // Compact view search functionality
-        $('#compactSearch').on('input', function() {
-            const searchText = $(this).val().toLowerCase();
-            $('.product-group').each(function() {
-                const category = $(this).data('category').toLowerCase();
-                const brand = $(this).data('brand').toLowerCase();
-                const type = $(this).data('type').toLowerCase();
-                const groupText = category + ' ' + brand + ' ' + type;
-                
-                if (groupText.includes(searchText)) {
-                    $(this).show();
-                } else {
-                    $(this).hide();
-                }
-            });
+
+        // Show/Hide filter
+        $('#filter_btn').click(function() {
+            $('#filterForm').removeClass('d-none');
+            $('#filter_btn').addClass('d-none');
+            $('#filter_btn_hide').removeClass('d-none');
         });
-        
-        // Clear search
-        $('#clearSearch').click(function() {
-            $('#compactSearch').val('').trigger('input');
+        $('#filter_btn_hide').click(function() {
+            $('#filterForm').addClass('d-none');
+            $('#filter_btn').removeClass('d-none');
+            $('#filter_btn_hide').addClass('d-none');
         });
     });
 
@@ -708,11 +783,6 @@
     function submitAddProduct() {
         // Implement add product functionality
         console.log('Add product');
-    }
-
-    function applyFilter() {
-        // Implement filter functionality
-        console.log('Apply filter');
     }
 </script>
 @endpush

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ToastHelper;
 use App\Models\HistoriesDB;
 use App\Models\ProductDB;
 use App\Models\ProductTypeDB;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use ProductType;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -24,6 +26,17 @@ class ProductController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
+    }
+
+    /**
+     * Get product image URL with fallback to default image
+     */
+    private function getProductImageUrl($product)
+    {
+        if ($product->image && file_exists(public_path('upload/product/' . $product->image))) {
+            return asset('upload/product/' . $product->image);
+        }
+        return asset('assets/icon/default-product.svg');
     }
 
     /**
@@ -102,12 +115,14 @@ class ProductController extends Controller
 
         // Paginate the results for standard view
         $result = $result->paginate(10);
+        $teams = TeamsDB::all();
 
         return view('page.product.list', [
             'data' => $result,
             'groupedProducts' => $groupedProducts,
             'number' => $startFrom,
-            'title' => 'product'
+            'title' => 'product',
+            'teams' => $teams
         ]);
     }
     public function myItem(Request $request)
@@ -171,90 +186,259 @@ class ProductController extends Controller
     }
     public function submit(Request $request)
     {
-        $data = $request->all();
-        # code...
-        $data['category'] = strtoupper($data['category']);
-        $data['brand'] = strtoupper($data['brand']);
-        $data['type'] = strtoupper($data['type']);
-        $data['looping'] = (int) $request->total_input_item;
-        $productType = ProductTypeDB::whereNull('deleted_at')
-            ->where('category', $data['category'])
-            ->where('brand', $data['brand'])
-            ->where('type', $data['type'])->first();
-        for ($xxx = 0; $xxx < $data['looping']; $xxx++) {
-            $data['price'] = preg_replace('/[^0-9]/', '', $data['price']);
-            $data['rental_price'] = preg_replace('/[^0-9]/', '', $data['rental_price']);
-            $product = new ProductDB();
-            $product->product_name = $data['name'];
-            $product->description = $data['description'];
-            $product->brand = $data['brand'];
-            $product->category = $data['category'];
-            $product->type = $data['type'];
-            $product->payment_date =
-                date("Y-m-d", strtotime($data['date']));
-            $product->price = $data['price'];
-            $product->purchase_price = $data['price'];
-            $product->rental_price = $data['rental_price'];
-            $product->status = $data['status'];
-            // dd($data);qr_string
-            $totalType = ProductDB::whereNull('deleted_at')
+        try {
+            $data = $request->all();
+            $data['category'] = strtoupper($data['category']);
+            $data['brand'] = strtoupper($data['brand']);
+            $data['type'] = strtoupper($data['type']);
+            $data['looping'] = (int) $request->total_input_item;
+
+            // Validasi input
+            $validator = Validator::make($data, [
+                'name' => 'required|string|max:255',
+                'description' => 'required|string|max:1000',
+                'brand' => 'required|string|max:100',
+                'category' => 'required|string|max:100',
+                'type' => 'required|string|max:100',
+                'date' => 'required|date',
+                'price' => 'required',
+                'rental_price' => 'required',
+                'status' => 'required|in:Good,Not Good,Broken,Lost',
+                'total_input_item' => 'required|integer|min:1',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+            ], [
+                'name.required' => 'Nama produk harus diisi',
+                'name.max' => 'Nama produk maksimal 255 karakter',
+                'description.required' => 'Deskripsi harus diisi',
+                'description.max' => 'Deskripsi maksimal 1000 karakter',
+                'brand.required' => 'Brand harus diisi',
+                'brand.max' => 'Brand maksimal 100 karakter',
+                'category.required' => 'Kategori harus diisi',
+                'category.max' => 'Kategori maksimal 100 karakter',
+                'type.required' => 'Tipe harus diisi',
+                'type.max' => 'Tipe maksimal 100 karakter',
+                'date.required' => 'Tanggal harus diisi',
+                'date.date' => 'Format tanggal tidak valid',
+                'price.required' => 'Harga harus diisi',
+                // 'price.numeric' => 'Harga harus berupa angka',
+                // 'price.min' => 'Harga minimal 0',
+                'rental_price.required' => 'Harga sewa harus diisi',
+                // 'rental_price.numeric' => 'Harga sewa harus berupa angka',
+                // 'rental_price.min' => 'Harga sewa minimal 0',
+                'status.required' => 'Status harus diisi',
+                'status.in' => 'Status tidak valid',
+                'total_input_item.required' => 'Jumlah item harus diisi',
+                'total_input_item.integer' => 'Jumlah item harus berupa angka',
+                'total_input_item.min' => 'Jumlah item minimal 1',
+                'image.image' => 'File harus berupa gambar',
+                'image.mimes' => 'Format gambar harus jpeg, png, jpg, gif, atau svg',
+                'image.max' => 'Ukuran gambar maksimal 2MB'
+            ]);
+
+            if ($validator->fails()) {
+                // Log::error($validator->errors());
+                ToastHelper::error($validator->errors()->all());
+                return redirect()->back()
+                    // ->withErrors($validator)
+                    ->withInput();
+            }
+
+            $productType = ProductTypeDB::whereNull('deleted_at')
                 ->where('category', $data['category'])
                 ->where('brand', $data['brand'])
-                ->where('type', $data['type'])->count();
-            if ($productType) {
-                $newCode = $productType->code;
-                $code = $this->generateCode($totalType, $newCode);
-            } else {
-                $newCode = $this->generateNewCode($data['category'], $data['brand'], $data['type']);
-                $code = $this->generateCode($totalType, $newCode);
-            }
-            if (array_key_exists('consumable', $data)) {
-                $product->is_consumable = 1;
-            }
-            // if ($data['code'] != null) {
-            //     if ($data['looping'] > 1) {
-            //         $product->product_code = $code;
-            //     } else {
-            //         $product->product_code = $data['code'];
-            //     }
-            // } else {
-            $product->product_code = $code;
-            // }
-            $product->code = $code;
+                ->where('type', $data['type'])->first();
 
-            $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            $charactersLength = strlen($characters);
-            $randomString = '';
-            for ($i = 0; $i < 100; $i++) {
-                $randomString .= $characters[rand(0, $charactersLength - 1)];
-            }
-            $product->qr_string = $randomString;
-            $product->created_by =
-                Auth::user()->id;
-            $product->save();
-            // dd($data);
+            for ($xxx = 0; $xxx < $data['looping']; $xxx++) {
+                $data['price'] = preg_replace('/[^0-9]/', '', $data['price']);
+                $data['rental_price'] = preg_replace('/[^0-9]/', '', $data['rental_price']);
+                $product = new ProductDB();
+                $product->product_name = $data['name'];
+                $product->description = $data['description'];
+                $product->brand = $data['brand'];
+                $product->category = $data['category'];
+                $product->type = $data['type'];
+                $product->payment_date = date("Y-m-d", strtotime($data['date']));
+                $product->price = $data['price'];
+                $product->purchase_price = $data['price'];
+                $product->rental_price = $data['rental_price'];
+                $product->status = $data['status'];
+                $product->size = $data['size'];
+                $product->vendor_name = $data['vendor_name'];
+                $product->is_show_on_web = $data['is_show_on_web'];
 
-            if (!$productType) {
-                $productType = new ProductTypeDB();
-                $productType->category = $data['category'];
-                $productType->brand = $data['brand'];
-                $productType->type = $data['type'];
-                $productType->code = $newCode;
-                $productType->created_by = Auth::user()->id;
-                $productType->save();
+                $totalType = ProductDB::whereNull('deleted_at')
+                    ->where('category', $data['category'])
+                    ->where('brand', $data['brand'])
+                    ->where('size', $data['size'])
+                    ->where('type', $data['type'])->count();
+
+                if ($productType) {
+                    $newCode = $productType->code;
+                    $code = $this->generateCode($totalType, $newCode);
+                } else {
+                    $newCode = $this->generateNewCode($data['category'], $data['brand'], $data['type']);
+                    $code = $this->generateCode($totalType, $newCode);
+                }
+
+                if (array_key_exists('consumable', $data)) {
+                    $product->is_consumable = 1;
+                }
+
+                $product->product_code = $code;
+                $product->code = $code;
+
+                $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                $charactersLength = strlen($characters);
+                $randomString = '';
+                for ($i = 0; $i < 100; $i++) {
+                    $randomString .= $characters[rand(0, $charactersLength - 1)];
+                }
+                $product->qr_string = $randomString;
+                $product->created_by = Auth::user()->id;
+
+                // Handle image upload dengan error handling
+                if ($request->hasFile('image')) {
+                    try {
+                        $file = $request->file('image');
+
+                        // Log informasi file untuk debugging
+                        Log::info('File upload attempt:', [
+                            'original_name' => $file->getClientOriginalName(),
+                            'mime_type' => $file->getMimeType(),
+                            'size' => $file->getSize(),
+                            'error' => $file->getError(),
+                            'error_message' => $file->getErrorMessage(),
+                            'temp_path' => $file->getPathname()
+                        ]);
+
+                        // Cek error upload
+                        if ($file->getError() !== UPLOAD_ERR_OK) {
+                            $errorMessages = [
+                                UPLOAD_ERR_INI_SIZE => 'File melebihi ukuran maksimum yang diizinkan oleh PHP',
+                                UPLOAD_ERR_FORM_SIZE => 'File melebihi ukuran maksimum yang diizinkan oleh form',
+                                UPLOAD_ERR_PARTIAL => 'File hanya terupload sebagian',
+                                UPLOAD_ERR_NO_FILE => 'Tidak ada file yang diupload',
+                                UPLOAD_ERR_NO_TMP_DIR => 'Folder temporary tidak ditemukan',
+                                UPLOAD_ERR_CANT_WRITE => 'Gagal menulis file ke disk',
+                                UPLOAD_ERR_EXTENSION => 'Upload dihentikan oleh ekstensi PHP'
+                            ];
+
+                            $errorMessage = $errorMessages[$file->getError()] ?? 'Error tidak diketahui saat upload file';
+                            throw new \Exception($errorMessage);
+                        }
+
+                        // Validasi tipe file
+                        $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/svg+xml'];
+                        if (!in_array($file->getMimeType(), $allowedMimes)) {
+                            throw new \Exception('Tipe file tidak didukung. Gunakan format: JPEG, PNG, JPG, GIF, atau SVG');
+                        }
+
+                        // Validasi ukuran file (2MB)
+                        if ($file->getSize() > 2048 * 1024) {
+                            throw new \Exception('Ukuran file terlalu besar. Maksimal 2MB');
+                        }
+
+                        // Generate nama file yang aman
+                        $extension = $file->getClientOriginalExtension();
+                        $filename = time() . '_' . uniqid() . '.' . $extension;
+
+                        // Pastikan direktori upload ada
+                        $uploadPath = public_path('upload/product');
+                        if (!file_exists($uploadPath)) {
+                            if (!mkdir($uploadPath, 0777, true)) {
+                                throw new \Exception('Gagal membuat direktori upload. Pastikan folder memiliki permission yang benar.');
+                            }
+                        }
+
+                        // Cek permission direktori
+                        if (!is_writable($uploadPath)) {
+                            throw new \Exception('Direktori upload tidak memiliki permission write. Silakan hubungi administrator.');
+                        }
+
+                        // Cek file temporary
+                        $tempPath = $file->getPathname();
+                        if (!file_exists($tempPath)) {
+                            throw new \Exception('File temporary tidak ditemukan. Silakan coba upload ulang.');
+                        }
+
+                        if (!is_readable($tempPath)) {
+                            throw new \Exception('File temporary tidak dapat dibaca. Silakan coba upload ulang.');
+                        }
+
+                        // Coba upload file dengan copy() sebagai alternatif move()
+                        try {
+                            $destinationPath = $uploadPath . DIRECTORY_SEPARATOR . $filename;
+
+                            // Coba copy file terlebih dahulu
+                            if (!copy($tempPath, $destinationPath)) {
+                                // Jika copy gagal, coba move
+                                if (!$file->move($uploadPath, $filename)) {
+                                    throw new \Exception('Gagal mengupload file. Silakan coba lagi.');
+                                }
+                            }
+
+                            // Verifikasi file berhasil diupload
+                            if (!file_exists($destinationPath)) {
+                                throw new \Exception('File gagal diupload. Silakan coba lagi.');
+                            }
+
+                            $product->image =  'upload/product/' . $filename;
+                            Log::info('File berhasil diupload:', [
+                                'filename' => $filename,
+                                'size' => filesize($destinationPath),
+                                'mime' => mime_content_type($destinationPath)
+                            ]);
+                        } catch (\Exception $e) {
+                            Log::error('Error saat upload file:', [
+                                'error' => $e->getMessage(),
+                                'path' => $uploadPath,
+                                'filename' => $filename,
+                                'temp_path' => $tempPath
+                            ]);
+                            throw new \Exception('Gagal mengupload file: ' . $e->getMessage());
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Error uploading image: ' . $e->getMessage(), [
+                            'file' => $file->getClientOriginalName(),
+                            'error_code' => $file->getError(),
+                            'error_message' => $file->getErrorMessage(),
+                            'temp_path' => $file->getPathname()
+                        ]);
+                        ToastHelper::error('Gagal mengupload gambar: ' . $e->getMessage());
+                        return redirect()->back()->withInput();
+                    }
+                }
+
+                $product->save();
+
+                if (!$productType) {
+                    $productType = new ProductTypeDB();
+                    $productType->category = $data['category'];
+                    $productType->brand = $data['brand'];
+                    $productType->type = $data['type'];
+                    $productType->code = $newCode;
+                    $productType->created_by = Auth::user()->id;
+                    $productType->save();
+                }
             }
+
+            ToastHelper::success('Product created successfully!');
+            return redirect(URL::To('/list-product'));
+        } catch (\Exception $e) {
+            Log::error('Error creating product: ' . $e->getMessage() . ' || ' . $e->getLine() . ' || ' . $e->getFile());
+            ToastHelper::error('Product created failed!');
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage())
+                ->withInput();
         }
-
-
-        return redirect(URL::To('/list-product'))->with('success', 'Berhasil menambahkan produk');
     }
     public function input()
     {
         return view('page.product.input', ['title' => 'product']);
     }
-    public function edit($code)
+    public function edit($id)
     {
-        $product = ProductDB::where('product_code', $code)->first();
+        $product = ProductDB::where('id', $id)->first();
         return view('page.product.edit', ['data' => $product, 'title' => 'product']);
     }
 
@@ -599,13 +783,24 @@ class ProductController extends Controller
                 $history->input($oldData->id, 'product', 'update', $old, $new, $column, $additionalData);
             }
         }
+        if ($request->hasFile('image')) {
+            // Hapus gambar lama jika ada
+            if ($product->image && file_exists(public_path('upload/product/' . $product->image))) {
+                unlink(public_path('upload/product/' . $product->image));
+            }
+            $file = $request->file('image');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('upload/product'), $filename);
+            $product->image = $filename;
+        }
         $product->save();
         $oldData->updated_by = Auth::user()->id;
         $oldData->save();
         // $oldData->delete();
 
-
-        return redirect(URL::To('/list-product'))->with('success', 'Berhasil mengubah data produk');
+        ToastHelper::success('Product updated successfully!');
+        return redirect(URL::To('/list-product'));
+        // return redirect(URL::To('/list-product'))->with('success', 'Berhasil mengubah data produk');
     }
 
     function generateNewCode($key1, $key2, $key3)
@@ -692,8 +887,7 @@ class ProductController extends Controller
     }
     public function submitManage(Request $request)
     {
-
-
+        Log::info("Fungsi submitManage dipanggil");
         $request->validate([
             'category' => 'required|min:2',
             'brand' => 'required|min:2',
@@ -703,6 +897,7 @@ class ProductController extends Controller
         $data->category = $request->category;
         $data->brand = $request->brand;
         $data->type = $request->type;
+        $data->size = $request->size;
 
         $newCode = $this->generateNewCode($request->category, $request->brand, $request->type);
         $data->code = $newCode;
@@ -710,15 +905,168 @@ class ProductController extends Controller
         $data->save();
         $history = new HistoriesDB();
         $history->input($data->id, 'product_type', 'create', '', '', '', '');
-        return redirect()->back()->with('success', 'Berhasil menambahkan data baru');
+        ToastHelper::success('Product updated successfully!');
+        return redirect()->back();
     }
     public function deleteManage($id)
     {
-        $productTypeDB =   ProductTypeDB::where('id', $id)->first();
+        $productTypeDB = ProductTypeDB::where('id', $id)->first();
 
         $history = new HistoriesDB();
         $history->input($productTypeDB->id, 'product_type', 'delete', '', '', '', '');
         $productTypeDB->delete();
         return redirect()->back()->with('success', 'Berhasil menghapus data');
+    }
+
+    public function delete($id)
+    {
+        try {
+            $product = ProductDB::findOrFail($id);
+            $oldData = clone $product;
+
+            // Soft delete the product
+            $product->deleted_by = Auth::user()->id;
+            $product->save();
+            $product->delete();
+
+            ToastHelper::success('Product deleted successfully!');
+            return redirect()->back();
+        } catch (\Exception $e) {
+            Log::error('Error deleting product: ' . $e->getMessage());
+            ToastHelper::error('Failed to delete product!');
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    public function transfer(Request $request)
+    {
+        // Check if user is owner or admin
+        Log::info("Fungsi transfer dipanggil");
+        Log::info($request->all());
+        if (auth()->user()->role !== 'owner' && auth()->user()->role !== 'admin' && auth()->user()->role !== 'super_user') {
+            ToastHelper::error('Unauthorized. Only owners and admins can transfer products.');
+            return back();
+            // return response()->json([
+            //     'success' => false,
+            //     'message' => 'Unauthorized. Only owners and admins can transfer products.'
+            // ], 403);
+        }
+
+        // $request->validate([
+        //     'product_ids' => 'required|array',
+        //     'product_ids.*' => 'exists:product,id',
+        //     // 'target_team_id' => 'required|exists:teams,group_id'
+        // ]);
+
+        try {
+            DB::beginTransaction();
+            $teamId = TeamsDB::where('id', $request->destination_team)->first();
+            foreach ($request->product_ids as $productId) {
+                $product = ProductDB::where('id', $productId)->first();
+                $oldTeamId = $product->team_id;
+
+                // Update product with new team ID
+                $product->team_id = $teamId->group_id;
+                $product->updated_by = auth()->id();
+                $product->save();
+            }
+
+            DB::commit();
+
+            ToastHelper::success('Products transferred successfully');
+            return redirect()->back();
+            // return response()->json([
+            //     'success' => true,
+            //     'message' => 'Products transferred successfully'
+            // ]);
+        } catch (\Exception $e) {
+            Log::error('Error transferring products: ' . $e->getMessage());
+            DB::rollBack();
+            ToastHelper::error('Error transferring products: ' . $e->getMessage());
+            return redirect()->back();
+            // return response()->json([
+            //     'success' => false,
+            //     'message' => 'Error transferring products: ' . $e->getMessage()
+            // ], 500);
+        }
+    }
+
+    public function search(Request $request)
+    {
+        try {
+            $query = $request->input('q');
+            $teamId = $request->input('team_id');
+
+            $products = ProductDB::where(function ($q) use ($query) {
+                $q->where('product_name', 'like', "%{$query}%")
+                    ->orWhere('product_code', 'like', "%{$query}%")
+                    ->orWhere('category', 'like', "%{$query}%")
+                    ->orWhere('brand', 'like', "%{$query}%")
+                    ->orWhere('type', 'like', "%{$query}%");
+            });
+
+            if ($teamId) {
+                $products = $products->where('team_id', $teamId);
+            }
+
+            $products = $products->get()->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'text' => $product->product_name . ' (' . $product->product_code . ')',
+                    'code' => $product->product_code,
+                    'name' => $product->product_name,
+                    'category' => $product->category,
+                    'brand' => $product->brand,
+                    'type' => $product->type,
+                    'status' => $product->status
+                ];
+            });
+
+            return response()->json($products);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'category' => 'required|string',
+            'brand' => 'required|string',
+            'type' => 'required|string',
+            'size' => 'nullable|string',
+            'vendor_name' => 'required|string',
+            'is_show_on_web' => 'boolean',
+            'date' => 'required|date',
+            'price' => 'required|numeric',
+            'rental_price' => 'required|numeric',
+            'status' => 'required|string',
+            'consumable' => 'boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        $data = $request->all();
+        $data['is_show_on_web'] = $request->has('is_show_on_web');
+        $data['is_consumable'] = $request->has('consumable');
+        $data['payment_date'] = $data['date'];
+        $data['created_by'] = Auth::id();
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('upload/product'), $imageName);
+            $data['image'] = $imageName;
+        }
+
+        $product = ProductDB::create($data);
+
+        return redirect()->route('products.index')
+            ->with('success', 'Product created successfully.');
     }
 }

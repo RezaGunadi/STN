@@ -18,6 +18,7 @@ class CreateUsersTable extends Migration
             $table->string('name');
             $table->string('phone')->nullable()->unique();
             $table->string('email')->unique();
+            $table->text('avatar')->nullable();
             $table->string('role')->default('');
             $table->string('status')->default('inacive');
             $table->integer('total_kerugian')->default(0);

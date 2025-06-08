@@ -53,8 +53,9 @@ class UserController extends Controller
         $result = User::
             // take($limit)->skip($startFrom)->
             orderBy($orderBy, $orderPriority);
-
-        $result = $result->where('role', '!=', 'owner');
+        if(Auth::user()->role != 'super_user'){
+                $result = $result->whereNotIn('role', ['user','super_user']);
+        }
         if (array_key_exists('name', $data)) {
             $result = $result->where('name', 'LIKE', '%' . $data['name'] . '%');
         }
@@ -76,15 +77,14 @@ class UserController extends Controller
     }
     public function addUser()
     {
-        return view('page.user.input', [ 'title' => 'user']);
+        return view('page.user.input', ['title' => 'user']);
     }
     public function input(Request $request)
     {
         $data = $request->all();
-        $checkData = User::where('email',$request->email)->orWhere('phone', $request->phone)->first();
-        if($checkData){
+        $checkData = User::where('email', $request->email)->orWhere('phone', $request->phone)->first();
+        if ($checkData) {
             return redirect()->back()->with('error', 'Nomor Ponsel atau E-Mail sudah terpakai');
-
         }
         $data['password'] = $data['phone'];
         Log::info('1');
@@ -106,8 +106,8 @@ class UserController extends Controller
         $old = '';
         $new = '';
         $column = '';
-       
-            $history->input($user->id, 'user', 'create', $old, $new, $column, $user->toArray());
+
+        $history->input($user->id, 'user', 'create', $old, $new, $column, $user->toArray());
         return redirect(URL::To('/list-user'))->with('success', 'Berhasil menambahkan pengguna');
     }
     public function submit(Request $request)
@@ -243,7 +243,7 @@ class UserController extends Controller
     public function updateProfile(Request $request)
     {
 
-        User::where('id', Auth::user()->id)->update($request);
+        User::where('id', Auth::user()->id)->update($request->all());
         return redirect(URL::To('/my-profile'));
     }
     public function changePassword(Request $request)
@@ -272,5 +272,211 @@ class UserController extends Controller
 
         $result = User::where('id', Auth::user()->id)->first();
         return view('email.pass_forgot', ['data' => $result, 'title' => 'profile']);
+    }
+
+    public function dashboard()
+    {
+        $user = Auth::user();
+        $recentActivities = HistoriesDB::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        return view('page.user.dashboard', [
+            'user' => $user,
+            'recentActivities' => $recentActivities,
+            'title' => 'User Dashboard'
+        ]);
+    }
+
+    // public function update(Request $request, $id)
+    // {
+    //     $user = User::findOrFail($id);
+
+    //     // Track old values for history
+    //     $oldData = $user->toArray();
+
+    //     $user->update($request->all());
+
+    //     // Create history entry
+    //     $history = new HistoriesDB();
+    //     $history->input(
+    //         $user->id,
+    //         'user',
+    //         'update',
+    //         json_encode($oldData),
+    //         json_encode($user->toArray()),
+    //         'all',
+    //         $oldData
+    //     );
+
+    //     return redirect()->back()->with('success', 'User updated successfully');
+    // }
+
+    public function delete($id)
+    {
+        $user = User::findOrFail($id);
+
+        // Track old values for history
+        $oldData = $user->toArray();
+
+        $user->delete();
+
+        // Create history entry
+        $history = new HistoriesDB();
+        $history->input(
+            $user->id,
+            'user',
+            'delete',
+            json_encode($oldData),
+            '',
+            'all',
+            $oldData
+        );
+
+        return redirect()->back()->with('success', 'User deleted successfully');
+    }
+
+    public function index()
+    {
+        $users = User::whereNotIn('role', ['user','super_user'])->get();
+        return view('users.index', compact('users'));
+    }
+
+    public function create()
+    {
+        return view('users.create');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'required|string|in:admin,user,manager'
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => $request->role
+        ]);
+
+        // Record history
+        HistoriesDB::create([
+            'created_by' => Auth::id(),
+            'ref_id' => $user->id,
+            'ref_type' => 'create_user',
+            'desc' => "Created new user '{$user->name}' with role '{$user->role}'",
+            'data' => [
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role
+            ]
+        ]);
+
+        return redirect()->route('users.index')
+            ->with('success', 'User created successfully.');
+    }
+
+    public function show(User $user)
+    {
+        return view('users.show', compact('user'));
+    }
+
+    // public function edit(User $user)
+    // {
+    //     return view('users.edit', compact('user'));
+    // }
+
+    public function update(Request $request, User $user)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'role' => 'required|string|in:admin,user,manager'
+        ]);
+
+        $oldRole = $user->role;
+        $user->update($request->all());
+
+        // Record history
+        HistoriesDB::create([
+            'created_by' => Auth::id(),
+            'ref_id' => $user->id,
+            'ref_type' => 'update_user',
+            'desc' => "Updated user '{$user->name}' role from '{$oldRole}' to '{$user->role}'",
+            'data' => [
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'old_role' => $oldRole,
+                'new_role' => $user->role
+            ]
+        ]);
+
+        return redirect()->route('users.index')
+            ->with('success', 'User updated successfully.');
+    }
+
+    public function destroy(User $user)
+    {
+        // Record history before deletion
+        HistoriesDB::create([
+            'created_by' => Auth::id(),
+            'ref_id' => $user->id,
+            'ref_type' => 'delete_user',
+            'desc' => "Deleted user '{$user->name}' with role '{$user->role}'",
+            'data' => [
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role
+            ]
+        ]);
+
+        $user->delete();
+
+        return redirect()->route('users.index')
+            ->with('success', 'User deleted successfully.');
+    }
+
+    // public function changePassword(Request $request, User $user)
+    // {
+    //     $request->validate([
+    //         'password' => 'required|string|min:8|confirmed'
+    //     ]);
+
+    //     $user->update([
+    //         'password' => Hash::make($request->password)
+    //     ]);
+
+    //     // Record history
+    //     History::create([
+    //         'user_id' => Auth::id(),
+    //         'action' => 'change_password',
+    //         'description' => "Changed password for user '{$user->name}'",
+    //         'data' => [
+    //             'user_id' => $user->id,
+    //             'name' => $user->name
+    //         ]
+    //     ]);
+
+    //     return redirect()->route('users.index')
+    //         ->with('success', 'Password changed successfully.');
+    // }
+
+    public function home()
+    {
+        \Illuminate\Support\Facades\DB::statement("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));");
+        // return view('users.home');
+        $products = ProductDB::groupBy('type')
+            ->groupBy('product_name')
+            ->groupBy('brand')
+            ->groupBy('category')
+            ->get();
+        return view('layouts.user', compact('products'));
     }
 }

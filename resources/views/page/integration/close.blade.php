@@ -65,7 +65,7 @@
                         </tbody>
                     </table>
                 </div>
-                @if (Auth::user()->role =='staff gudang' || Auth::user()->role =='owner')
+                @if (Auth::user()->role =='gudang' || Auth::user()->role =='owner'|| Auth::user()->role == 'super_user')
 
                 <button class="btn btn-primary w-100" id="inputData" type="submit">Submit</button>
                 @else

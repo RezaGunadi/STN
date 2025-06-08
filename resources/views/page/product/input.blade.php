@@ -1,8 +1,14 @@
 @extends('layouts.index')
 @push('css')
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
-<link rel="stylesheet" href="/resources/demos/style.css">
 
+<link rel="stylesheet" href="/resources/demos/style.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .cari {
+        height: 38px !important;
+        line-height: 38px !important;
+    }
+</style>
 @endpush
 @section('content')
 <div class="container py-5">
@@ -24,7 +30,7 @@ price
 status
 consumable --}}
                 <div class="card-body">
-                    <form action="{{ route('submit_product') }}" method="POST">
+                    <form action="{{ route('submit_product') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         {{-- <div class="mb-3" id="code_section">
                             <label for="code" class="form-label text-capitalize">Code</label>
@@ -85,14 +91,41 @@ consumable --}}
                             @enderror
                         </div>
                         <div class="mb-3">
+                            <label for="size" class="form-label text-capitalize">Size</label>
+                            <select id="size_search" class="cari form-control w-100" name="size"></select>
+                            @error('size')
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
+                            @enderror
+                        </div>
+                        <div class="mb-3">
+                            <label for="vendor" class="form-label text-capitalize">Vendor</label>
+                            <select id="vendor_search" class="cari form-control w-100" name="vendor_name"></select>
+                            @error('vendor_name')
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
+                            @enderror
+                        </div>
+                        {{-- <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_show_on_web" name="is_show_on_web" value="1">
+                                <label class="form-check-label" for="is_show_on_web">
+                                    Show on Web
+                                </label>
+                            </div>
+                        </div> --}}
+                        <div class="mb-3">
                             <label for="date" class="form-label text-capitalize">payment Date</label>
                             <input type="text" class="form-control @error('date') is-invalid @enderror" required
                                 name="date" id="date">
                         </div>
                         <div class="mb-3">
                             <label for="price" class="form-label text-capitalize">Purchase Price</label>
-                            <input type="text" onkeyup="oneDot(this)" class="form-control @error('price') is-invalid @enderror" required
-                                id="price" name="price" placeholder="100000">
+                            <input type="text" onkeyup="oneDot(this)"
+                                class="form-control @error('price') is-invalid @enderror" required id="price"
+                                name="price" placeholder="100000">
                             @error('phone')
                             <span class="invalid-feedback" role="alert">
                                 <strong>{{ $message }}</strong>
@@ -101,7 +134,8 @@ consumable --}}
                         </div>
                         <div class="mb-3">
                             <label for="rental_price" class="form-label text-capitalize">Rental Price</label>
-                            <input type="text" onkeyup="oneDot(this)" class="form-control @error('rental_price') is-invalid @enderror" required
+                            <input type="text" onkeyup="oneDot(this)"
+                                class="form-control @error('rental_price') is-invalid @enderror" required
                                 id="rental_price" name="rental_price" placeholder="100000">
                             @error('phone')
                             <span class="invalid-feedback" role="alert">
@@ -117,25 +151,56 @@ consumable --}}
                             <option value="Broken">Broken</option>
                             <option value="Lost">Lost</option>
                         </select>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="1" name="consumable" id="consumable">
-                            <label class="form-check-label" for="consumable">
+                        <div class="row m-0 p-0" >
+                            <div class="col-auto">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="1" name="consumable" id="consumable">
+                                    <label class="form-check-label" for="consumable">
                                 Is Consumable
-                            </label>
-                        </div>
-                        <div style="font-weight: 500; font-size: 16px; pt-3">
-                            Jumlah Barang
-                            <i id="minus" style="font-size: 24px; color: rgb(244, 177, 190);"
-                                class="mx-3 bi bi-dash-circle"></i>
-                            <input type="hidden" value="1" name="total_input_item" id="total_input_item">
-                            <div id="total_value" class="px-3 d-inline ms-3">
-                                1
+                                    </label>
+                                </div>
                             </div>
-                            
-                            <i id="plus" style="font-size: 24px; color: rgb(244, 177, 190);"
-                                class="mx-3 bi bi-plus-circle"></i>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_show_on_web" name="is_show_on_web" value="1">
+                                    <label class="form-check-label" for="is_show_on_web">
+                                    Show on Web
+                                    </label>
+                                </div>
+                            </div>
                         </div>
-                        <div id="info" class="d-none my-3"
+
+
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Product Image</label>
+                            {{-- @if($data->image && file_exists(public_path('upload/product/'.$data->image)))
+                                                    <div class="mb-2">
+                                                        <img src="{{ asset('upload/product/'.$data->image) }}"
+                            alt="Product Image"
+                            style="max-width:120px;">
+                        </div>
+                        @else --}}
+                        {{-- <div class="mb-2">
+                                                        <img src="{{ asset('assets/icon/default-product.svg') }}"
+                        alt="Default Product Image"
+                        style="max-width:120px;">
+                </div> --}}
+                {{-- @endif --}}
+                <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                <small class="text-muted">Upload untuk mengganti gambar</small>
+            </div>
+            <br>
+            <div style="font-weight: 500; font-size: 16px; pt-3">
+                Jumlah Barang
+                <i id="minus" style="font-size: 24px; color: rgb(244, 177, 190);" class="mx-3 bi bi-dash-circle"></i>
+                <input type="hidden" value="1" name="total_input_item" id="total_input_item">
+                <div id="total_value" class="px-3 d-inline ms-3">
+                    1
+                </div>
+
+                <i id="plus" style="font-size: 24px; color: rgb(244, 177, 190);" class="mx-3 bi bi-plus-circle"></i>
+            </div>
+            {{-- <div id="info" class="d-none my-3"
                             style="background-color: rgb(244, 177, 190); border-radius: 8px;">
                             <div class="d-inline-block pb-3">
 
@@ -145,53 +210,186 @@ consumable --}}
                                 Kode produk akan di buat otomatis apabila Menambahkan lebih dari 1 produk dalam satu
                                 kali input.
                             </div>
-                        </div>
-                        <button class="btn btn-primary text-capitalize mt-5 w-100" id="inputData" type="submit">
-                            submit
-                        </button>
-                    </form>
-                </div>
-            </div>
+                        </div> --}}
+
+            <button class="btn btn-primary text-capitalize mt-5 w-100" id="inputData" type="submit">
+                submit
+            </button>
+            </form>
         </div>
     </div>
 </div>
+</div>
+</div>
 @endsection
 @push('script')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    $( function() {
-        $( "#date" ).datepicker();
-      } );
-</script>
-<script type="text/javascript">
-    var x=1;
-    $('#plus').click(function (e) {
-        e.preventDefault();
-        x=x+1;
-        document.getElementById("total_input_item").setAttribute('value',x);
-        if (x>1) {
-        
-            $("#info").removeClass("d-none");
-            $("#info").addClass("d-block");
+    $(document).ready(function() {
+        // Initialize Select2 for category
+        $('#category_search').select2({
+            placeholder: 'Search category...',
+            allowClear: true,
+            ajax: {
+                url: '/auto-complete-category',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term || ''
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item.name,
+                                text: item.name
+                            };
+                        })
+                    };
+                }
+            },
+            minimumInputLength: 1
+        });
+
+        // Initialize Select2 for brand
+        $('#brand_search').select2({
+            placeholder: 'Search brand...',
+            allowClear: true,
+            ajax: {
+                url: '/auto-complete-brand',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term || ''
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item.name,
+                                text: item.name
+                            };
+                        })
+                    };
+                }
+            },
+            minimumInputLength: 1
+        });
+
+        // Initialize Select2 for type
+        $('#type_search').select2({
+            placeholder: 'Search type...',
+            allowClear: true,
+            ajax: {
+                url: '/auto-complete-type',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term || ''
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item.name,
+                                text: item.name
+                            };
+                        })
+                    };
+                }
+            },
+            minimumInputLength: 1
+        });
+
+        // Initialize Select2 for size
+        $('#size_search').select2({
+            placeholder: 'Search size...',
+            allowClear: true,
+            ajax: {
+                url: '/auto-complete-size',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term || ''
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item.size,
+                                text: item.size
+                            };
+                        })
+                    };
+                }
+            },
+            minimumInputLength: 1
+        });
+
+        // Initialize Select2 for vendor
+        $('#vendor_search').select2({
+            placeholder: 'Search vendor...',
+            allowClear: true,
+            ajax: {
+                url: '/auto-complete-vendor',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term || ''
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item.name,
+                                text: item.name
+                            };
+                        })
+                    };
+                }
+            },
+            minimumInputLength: 1
+        });
+
+        // Counter untuk jumlah barang
+        var x=1;
+        $('#plus').click(function (e) {
+            e.preventDefault();
+            x=x+1;
+            document.getElementById("total_input_item").setAttribute('value',x);
+            if (x>1) {
+                $("#info").removeClass("d-none");
+                $("#info").addClass("d-block");
+                $("#total_value").html(' '+x+' ');
+                $("#code_section").addClass("d-none");
+                $("#code_section").removeClass("d-block");
+            }
+        });
+        $('#minus').click(function (e) {
+            e.preventDefault();
+            x=x-1;
+            document.getElementById("total_input_item").value=""+x+"";
             $("#total_value").html(' '+x+' ');
-            $("#code_section").addClass("d-none");
-            $("#code_section").removeClass("d-block");
-        }
-    });
-    $('#minus').click(function (e) {
-        e.preventDefault();
-        x=x-1;
-        document.getElementById("total_input_item").value=""+x+"";
-        $("#total_value").html(' '+x+' ');
-        if (x<1) { 
-            x==1; 
-        }
-        if (x==1) { 
+            if (x<1) { 
+                x==1; 
+            }
+            if (x==1) { 
                 $("#code_section").removeClass("d-none");
                 $("#code_section").addClass("d-block"); 
                 $("#info").addClass("d-none"); 
                 $("#info").removeClass("d-block");
-        } 
+            } 
+        });
     });
-    
 </script>
 @endpush

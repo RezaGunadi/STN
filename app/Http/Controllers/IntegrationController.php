@@ -17,7 +17,11 @@ use LaravelQRCode\Facades\QRCode;
 use Product;
 use Intervention\Image\Facades\Image;
 use Teams;
-
+use Illuminate\Support\Facades\DB;
+use App\Models\HistoriesDB;
+use App\Models\Integration;
+use Illuminate\Support\Facades\Log;
+use App\Helpers\ToastHelper;
 // use Illuminate\Support\Facades\Image;
 
 // use SimpleSoftwareIO\QrCode\Facades\QrCode as FacadesQrCode;
@@ -89,6 +93,7 @@ class IntegrationController extends Controller
             $group_id = $existing_group_id;
         } else {
             $group_id = 1;
+            $randomName = \Illuminate\Support\Str::random(5);
             $lastTeam = TeamsDB::where('id', '>', 0)->orderBy('id', 'desc')->first();
             if ($lastTeam) {
                 $group_id = $lastTeam->group_id + 1;
@@ -97,6 +102,7 @@ class IntegrationController extends Controller
             // Create new team entries
             foreach ($staff_ids as $staf_id) {
                 $team = new TeamsDB();
+                $team->name = 'Team ' . $randomName;
                 $team->group_id = $group_id;
                 $team->user_id = $staf_id;
                 $team->save();
@@ -106,12 +112,52 @@ class IntegrationController extends Controller
         // Update products with the team ID
         $products = ProductDB::whereIn('id', $ids)->get();
         foreach ($products as $product) {
+            // Track old values for history
+            $oldIsAvailable = $product->is_available;
+            $oldTeamId = $product->team_id;
+            $additionalData = $product->toArray();
+
             $product->is_available = 0;
             $product->team_id = $group_id;
             $product->save();
-        }
 
-        return redirect(URL::To('/integration'))->with('success', 'Berhasil memproses produk');
+            // Create history entries
+            $history = new HistoriesDB();
+            $history->input(
+                $product->id,
+                'product',
+                'update',
+                $oldIsAvailable,
+                0,
+                'is_available',
+                $additionalData
+            );
+            $history->input(
+                $product->id,
+                'product',
+                'update',
+                $oldTeamId,
+                $group_id,
+                'team_id',
+                $additionalData
+            );
+        }
+        // // Record history
+        // HistoriesDB::create([
+        //     'ref_id' => $product->id,
+        //     'created_by' => Auth::id(),
+        //     'ref_type' => 'update_products',
+        //     'desc' => "Updated products for group ID: $group_id",
+        //     'data' => [
+        //         'group_id' => $group_id,
+        //         'product_ids' => implode(',', $ids),
+        //         'old_status' => 'Available',
+        //         'new_status' => 'Unavailable'
+        //     ]
+        // ]);
+
+        ToastHelper::success('Berhasil memproses produk');
+        return redirect(URL::To('/integration'));
     }
     public function close(Request $request)
     {
@@ -123,12 +169,63 @@ class IntegrationController extends Controller
         }
         $products =  ProductDB::whereIn('id', $ids)->get();
         foreach ($products as $product) {
+            // Track old values for history
+            $oldIsAvailable = $product->is_available;
+            $oldUserId = $product->user_id;
+            $oldTeamId = $product->team_id;
+            $additionalData = $product->toArray();
+
             $product->is_available = 1;
             $product->user_id = 0;
             $product->team_id = 0;
             $product->save();
+
+            // Create history entries
+            $history = new HistoriesDB();
+            $history->input(
+                $product->id,
+                'product',
+                'update',
+                $oldIsAvailable,
+                1,
+                'is_available',
+                $additionalData
+            );
+            $history->input(
+                $product->id,
+                'product',
+                'update',
+                $oldUserId,
+                0,
+                'user_id',
+                $additionalData
+            );
+            $history->input(
+                $product->id,
+                'product',
+                'update',
+                $oldTeamId,
+                0,
+                'team_id',
+                $additionalData
+            );
         }
-        return redirect(URL::To('/integration-menu'))->with('success', 'Berhasil memproses produk');
+
+        // // Record history
+        // HistoriesDB::create([
+        //     'user_id' => Auth::id(),
+        //     'action' => 'update_products',
+        //     'desc' => "Updated products for group ID: 0",
+        //     'data' => [
+        //         'group_id' => 0,
+        //         'product_ids' => implode(',', $ids),
+        //         'old_status' => 'Unavailable',
+        //         'new_status' => 'Available'
+        //     ]
+        // ]);
+
+        ToastHelper::success('Berhasil memproses produk');
+        return redirect(URL::To('/integration-menu'));
     }
     public function integration(Request $request)
     {
@@ -163,173 +260,73 @@ class IntegrationController extends Controller
 
     public function generateQr(Request $request)
     {
+        try {
+            $user = User::where('qr', $request->qr)->first();
+            if (!$user) {
+                return response()->json(['error' => 'User not found'], 404);
+            }
 
-        $user =         User::where('qr', $request->qr)->first();
-        if ($user->qr == $user->mobile_token) {
-            # code...
-            $url = 'https://quickchart.io/qr?text=' . $request->qr . '&size=250&caption=STN Multimedia';
-            copy($url, 'assets/img/qr/' . $request->qr . '.png');
+            if ($user->qr == $user->mobile_token || $user->mobile_token == null) {
+                // Properly encode the QR code text
+                $encodedQr = urlencode($request->qr);
+                $url = 'https://quickchart.io/qr?text=' . $encodedQr . '&size=250&caption=STN%20Multimedia';
 
-            $user =         User::where('qr', $request->qr)->first();
-            $user->mobile_token = 'assets/img/' . $request->qr . '.png';
-            $user->save();
+                // Create directory if it doesn't exist
+                $directory = public_path('assets/img/qr');
+                if (!file_exists($directory)) {
+                    mkdir($directory, 0777, true);
+                }
+
+                $filePath = $directory . '/' . $request->qr . '.png';
+                $publicPath = 'assets/img/qr/' . $request->qr . '.png';
+
+                // Download and save QR code with error handling
+                $qrContent = @file_get_contents($url);
+                if ($qrContent === false) {
+                    throw new \Exception('Failed to generate QR code');
+                }
+                file_put_contents($filePath, $qrContent);
+
+                // Update user record
+                $user->mobile_token = $publicPath;
+                $user->save();
+            }
+
+            // Check if file exists before downloading
+            $downloadPath = public_path($user->mobile_token);
+            if (file_exists($downloadPath)) {
+                return response()->download($downloadPath);
+            }
+
+            return response()->json(['error' => 'QR code file not found'], 404);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('QR Generation Error: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to generate QR code: ' . $e->getMessage()], 500);
         }
-        return response()->download($user->mobile_token);
-        // return $this->forceDownloadQR('https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=test123');
-        // // $contents = file_get_contents($url);
-        // // $name = substr($url, strrpos($url, '/') + 1);
-        // // $file =  QRCode::text($request->qr)->setSize(10)->png();
-        // // $contents = file_get_contents($url);
-        // // // dd($contents);
-        // // Storage::put('hahahaname', $contents);
-        // // // $info = pathinfo($url);
-        // // // $contents = file_get_contents($url);
-        // // // $file = '/img/' . $request->qr;
-        // // // file_put_contents($file, $contents);
-        // // // $uploaded_file = new UploadedFile($file, $info['basename']);
-        // // $url = 'https://pay.google.com/about/static/images/social/og_image.jpg';
-        // $info = pathinfo($url);
-        // $contents = file_get_contents($url);
-        // $file =  $info['basename'];
-        // file_put_contents($file, $contents);
-        // $uploaded_file = new UploadedFile($file, $info['basename']);
-        // dd($uploaded_file);
-        // $response = Response::make($file);
-        // $response->header('Content-Type', "image/png");
+    }
+    public function generateQrproduct(Request $request)
+    {
+        $product = ProductDB::where('qr_string', $request->qr)->first();
 
-        // return $response;
-        //  $contents = file_get_contents($file);
-        // $storage_disk = 'public' ;
-        // Storage::disk($storage_disk)->put('filename.png', $file);
+        if ($product->qr == $product->qr_string || $product->qr == null) {
+            // Create directory if it doesn't exist
+            $directory = public_path('assets/img/qr');
+            if (!file_exists($directory)) {
+                mkdir($directory, 0777, true);
+            }
 
-        // return 'S';
+            $url = 'https://quickchart.io/qr?text=' . $request->qr . '&size=250&caption=STN Multimedia';
+            $filePath = $directory . '/' . $request->qr . '.png';
 
-        // Image::make($file)->save();
+            // Download and save QR code
+            file_put_contents($filePath, file_get_contents($url));
 
-        // return FacadesQrCode::text($request->qr)->png();
-        // return QRCode::text($request->qr)->png();
+            // Update product record
+            $product->qr = 'assets/img/qr/' . $request->qr . '.png';
+            $product->save();
+        }
 
-
-        // $file =  QRCode::text($request->qr)->setSize(10)->png();
-        // // $response = Response::make($file);
-        // // $response->header('Content-Type', "image/png");
-        // // return $response;
-
-
-        // // return  QRCode::text($request->qr)->setSize(10)
-        //     // ->setOutfile('/path/to/email-qr-code.png')
-        //     // ->png();
-
-        // //         $png = base64_encode($file);
-
-        // $path = public_path() . 'img/designs/' . $request->qr;
-
-        // $img = Image::make(($file));
-
-        // $img->save('public/bar.png');
-
-        // $image = file_get_contents("https://api.qrserver.com/v1/create-qr-code/?data=HelloWorld&amp;size=100x100");
-
-
-        // // file_put_contents(public_path('img/a.png'), $image);
-
-
-        // $data = $this->file_get_contents_curl($image);
-        // file_put_contents('/img/testing' . 'test.png', $data); 
-
-        // return response()->streamDownload(function () {
-        //     file_put_contents('test.png', 'https://api.qrserver.com/v1/create-qr-code/?data=HelloWorld&amp;size=100x100');
-        // });
-        // // return response()->download("https://api.qrserver.com/v1/create-qr-code/?data=HelloWorld&amp;size=100x100");
-
-
-
-
-        //=========================
-
-        //         // return FacadesQrCode::text($request->qr)->png();
-        //         // return QRCode::text($request->qr)->png();
-
-        //         $image = QrCode::text($request->qr)
-        //             // ->merge('img/t.jpg', 0.1, true)
-        //             ->setSize(200)
-        //             // ->errorCorrection('H')
-        //             // ->generate($request->qr)
-        //             ->png();
-
-        //         $png = base64_encode($image);
-        //         return  response()->download($png);
-        //         // $output_file = '/img/qr-code/img-' . time() . '.png';
-
-        //         // Storage::disk('local')->put($output_file, base64_decode($png));
-        //         // $response = Response::make($image);
-        //         // $response->header('Content-Type', "image/png");
-        //         // Storage::put('file.jpg', $png);
-        //         // Storage::disk('local')->put($output_file, $png);
-
-        //         // $file = 'generated_qrcodes/' . $request->qr . '.png';
-
-
-
-        //         // // $newqrcode = QrCode::text('message')
-        //         // // ->setSize(10)
-        //         // // ->setMargin(2)
-        //         // // ->setOutfile($file)
-        //         // // // ->generate('ItSolutionStuff.com')
-        //         // // ->png();
-
-        //         // QRCode::text($request->qr)->setSize(10)->generate() ->png();
-
-        //         // // if ($newqrcode) {
-        //         //     $input['qrcode_path'] = $file;
-
-        //     // // //     $file=  QRCode::text($request->qr)->setSize(10)->png();
-
-        //     // // //     // if ($request->hasFile('image')) {
-        //     // // //         // $randomize = rand(111111, 999999);
-        //     // // //         // $extension = $file->getClientOriginalExtension();
-        //     // // //         $filename = $request->qr;
-        //     // // //         $image = $file->store('images', $filename);
-        //     // // //     // }
-        //     // // // $user =         User::where('qr', $request->qr)->first();
-        //     // // // $user->mobile_token = $image;
-        //     // // // $user->save();
-
-        //     // // // return response()->download($image);
-
-        //         // $response = Response::make($file);
-        //         // $response->header('Content-Type', "image/png");
-
-
-        //         // $file = public_path() . "/download/info.pdf";
-
-        //         // $headers = array(
-        //         //     'Content-Type: image/png',
-        //         // );
-
-        //         // return Response::download(
-        //         //     $response,
-        //         //     'filename.pdf',
-        //         //     $headers
-        //         // );
-        //         // return  response()->download($response);
-        // //         $path = public_path('uploads/image/');
-
-
-        //=========================
-        //         $path = public_path('uploads/image/');
-        // $file_name = time() . "_" . $request->code;
-        // $response->move($path, $file_name);
-        // // Download Image
-
-        // $filepath = public_path('uploads/image/')."$request->code.jpg";
-        // return Response::download($response);
-        // return Response::download($response,
-        //     $request->code.'.png'
-        // );
-        // return QRCode::text($request->qr)
-        //     // ->setOutfile('/path/to/email-qr-code.png')
-        //     ->png();
+        return response()->download(public_path($product->qr));
     }
 
     public function autoCompleteProduct(Request $request)
@@ -356,16 +353,67 @@ class IntegrationController extends Controller
         }
         return response()->json($results);
     }
-    public function autoCompleteUser(Request $request)
+    public function autoCompleteProductEvent(Request $request)
     {
-        $q = $request->q;
-        $queries = User::where('name', 'LIKE', "%$request->q%")->orWhere('email', 'LIKE', "%$request->q%")->orWhere('phone', 'LIKE', "%$request->q%")->take(5)->get();
+
+        $term = $request->q;
+        $queries = ProductDB::where(function ($query) use ($request) {
+            $query->where('product_name', 'LIKE', "%$request->q%")->orWhere('code', 'LIKE', "%$request->q%");
+        })
+            // ->where('is_available', 1)
+
+            ->take(5)->get();
         $results = array();
         foreach ($queries as $query) {
 
-            $results[] = ['id' => $query->id, 'email' => $query->email, 'name' => $query->name, 'phone' => $query->phone, 'name' => $query->name]; //you can take custom values as you want
+            $results[] = [
+                'id' => $query->id,
+                'code' => $query->code,
+                'product_name' => $query->product_name,
+                'is_consumable' => $query->is_consumable == 1 ? 'Yes' : 'No',
+                'is_available' => $query->is_available == 1 ? 'Available' : 'Not Available',
+                'status' => $query->status
+            ]; //you can take custom values as you want
         }
         return response()->json($results);
+    }
+    public function autoCompleteUser(Request $request)
+    {
+        try {
+            if (!Auth::check()) {
+                return response()->json(['error' => 'Unauthenticated'], 401);
+            }
+
+            $user = Auth::user();
+            if ($user->role == 'user' || $user->role == '' || $user->role == null) {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+
+            $q = $request->q;
+            if (empty($q)) {
+                return response()->json([]);
+            }
+
+            $queries = User::where('name', 'LIKE', "%$q%")
+                ->orWhere('email', 'LIKE', "%$q%")
+                ->orWhere('phone', 'LIKE', "%$q%")
+                ->take(5)
+                ->get();
+
+            $results = $queries->map(function ($query) {
+                return [
+                    'id' => $query->id,
+                    'email' => $query->email,
+                    'name' => $query->name,
+                    'phone' => $query->phone
+                ];
+            });
+
+            return response()->json($results);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error in autoCompleteUser: ' . $e->getMessage());
+            return response()->json(['error' => 'Internal server error'], 500);
+        }
     }
     public function autoCompleteCategory(Request $request)
     {
@@ -424,5 +472,131 @@ class IntegrationController extends Controller
                 return response()->json($query);
             }
         }
+    }
+
+    public function index()
+    {
+        $integrations = Integration::all();
+        return view('integrations.index', compact('integrations'));
+    }
+
+    public function create()
+    {
+        return view('integrations.create');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|string|max:255',
+            'status' => 'required|string|max:255',
+            'config' => 'required|json',
+            'description' => 'nullable|string'
+        ]);
+
+        $integration = Integration::create($request->all());
+
+        // Record history
+        HistoriesDB::create([
+            'ref_id' => $integration->id,
+            'created_by' => Auth::id(),
+            'ref_type' => 'create_integration',
+            'desc' => "Created new integration '{$integration->name}' of type '{$integration->type}'",
+            'data' => [
+                'integration_id' => $integration->id,
+                'name' => $integration->name,
+                'type' => $integration->type,
+                'status' => $integration->status
+            ]
+        ]);
+
+        return redirect()->route('integrations.index')
+            ->with('success', 'Integration created successfully.');
+    }
+
+    public function show(Integration $integration)
+    {
+        return view('integrations.show', compact('integration'));
+    }
+
+    public function edit(Integration $integration)
+    {
+        return view('integrations.edit', compact('integration'));
+    }
+
+    public function update(Request $request, Integration $integration)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|string|max:255',
+            'status' => 'required|string|max:255',
+            'config' => 'required|json',
+            'description' => 'nullable|string'
+        ]);
+
+        $oldStatus = $integration->status;
+        $integration->update($request->all());
+
+        // Record history
+        HistoriesDB::create([
+            'ref_id' => $integration->id,
+            'created_by' => Auth::id(),
+            'ref_type' => 'update_integration',
+            'desc' => "Updated integration '{$integration->name}' status from '{$oldStatus}' to '{$integration->status}'",
+            'data' => [
+                'integration_id' => $integration->id,
+                'name' => $integration->name,
+                'old_status' => $oldStatus,
+                'new_status' => $integration->status
+            ]
+        ]);
+
+        return redirect()->route('integrations.index')
+            ->with('success', 'Integration updated successfully.');
+    }
+
+    public function destroy(Integration $integration)
+    {
+        // Record history before deletion
+        HistoriesDB::create([
+            'ref_id' => $integration->id,
+            'created_by' => Auth::id(),
+            'ref_type' => 'delete_integration',
+            'desc' => "Deleted integration '{$integration->name}' of type '{$integration->type}'",
+            'data' => [
+                'integration_id' => $integration->id,
+                'name' => $integration->name,
+                'type' => $integration->type,
+                'status' => $integration->status
+            ]
+        ]);
+
+        $integration->delete();
+
+        return redirect()->route('integrations.index')
+            ->with('success', 'Integration deleted successfully.');
+    }
+
+    public function sync(Integration $integration)
+    {
+        // Perform sync operation
+        $result = $integration->sync();
+
+        // Record history
+        HistoriesDB::create([
+            'ref_id' => $integration->id,
+            'created_by' => Auth::id(),
+            'ref_type' => 'sync_integration',
+            'desc' => "Synchronized integration '{$integration->name}'",
+            'data' => [
+                'integration_id' => $integration->id,
+                'name' => $integration->name,
+                'sync_result' => $result
+            ]
+        ]);
+
+        return redirect()->route('integrations.index')
+            ->with('success', 'Integration synchronized successfully.');
     }
 }

@@ -1,6 +1,6 @@
 @extends('layouts.index')
 @push('css')
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+
 <link rel="stylesheet" href="/resources/demos/style.css">
 
 @endpush
@@ -45,11 +45,17 @@ consumable --}}
                         <label for="role" class="form-label text-capitalize">role</label>
                         <select class="form-select form-select-lg mb-3 text-capitalize" id="role" name="role"
                             aria-label="role">
+                            @if (Auth::user()->role == 'super_user')
+                            <option class="text-capitalize" value="super_user">Super User</option>
+                            @endif
+                            @if (Auth::user()->role == 'owner' || Auth::user()->role == 'super_user')
+                            <option class="text-capitalize" value="owner">Owner</option>
+                            @endif
                             {{-- <option selected>Status</option> --}}
                             <option {{ $data->role == 'admin' ?  "selected":'' }} class="text-capitalize" value="admin">
                                 Admin</option>
-                            <option {{ $data->role == 'staff gudang' ?  "selected":'' }} class="text-capitalize"
-                                value="staff gudang">Staff Gudang</option>
+                            <option {{ $data->role == 'gudang' ?  "selected":'' }} class="text-capitalize"
+                                value="gudang">gudang</option>
                             <option {{ $data->role == 'staff' ?  "selected":'' }} class="text-capitalize" value="staff">
                                 Staff</option>
                             <option {{ $data->role == 'user' ?  "selected":'' }} class="text-capitalize" value="user">
@@ -64,7 +70,7 @@ consumable --}}
                                 value="active">Aktif</option>
                             <option {{ $data->status == 'inactive' ?  "selected":'' }} class="text-capitalize"
                                 value="inactive">inactive</option>
-                            {{-- <option class="text-capitalize" value="staff gudang">Staff Gudang</option>
+                            {{-- <option class="text-capitalize" value="gudang">gudang</option>
                             <option class="text-capitalize" value="staff">Staff</option> --}}
                             {{-- <option value="Lost">Lost</option> --}}
                         </select>

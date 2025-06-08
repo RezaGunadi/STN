@@ -19,9 +19,9 @@ class JobDetails extends Migration
             // $table->integer('closer_user_id');
             $table->integer('id_product');
             $table->integer('day_finished')->default(0);
-            $table->string('lat_user');
-            $table->string('lng_user');
-            $table->text('picture');
+            $table->string('lat_user')->nullable();
+            $table->string('lng_user')->nullable();
+            $table->text('picture')->nullable();
             $table->integer('total_price')->default(0);
             $table->integer('price_before_discount')->default(0);
             $table->integer('discount')->default(0);

@@ -93,6 +93,7 @@ class HistoriesDB extends Model
 
             // Create the legacy history entry for backward compatibility
             $params = [
+                'data' => $model,
                 'ref_id' => $id,
                 'ref_type' => $type,
                 'desc' => $changeLog->description,

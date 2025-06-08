@@ -56,9 +56,9 @@
         <h1 class="section-title">Asset Management Portal</h1>
 
         <div class="row g-4">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <a href="{{ URL::To('/closing-integration') }}" class="text-decoration-none">
-                    <div class="integration-card p-4 text-center">
+                    <div class="integration-card p-4 text-center h-100">
                         <div class="integration-icon">
                             <i class="bi bi-box-arrow-in-down-right"></i>
                         </div>
@@ -72,9 +72,9 @@
                 </a>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <a href="{{ URL::To('/integration') }}" class="text-decoration-none">
-                    <div class="integration-card p-4 text-center">
+                    <div class="integration-card p-4 text-center h-100">
                         <div class="integration-icon">
                             <i class="bi bi-box-arrow-down-right"></i>
                         </div>
@@ -83,6 +83,22 @@
                             Manage the deployment of assets to field operations. This system enables efficient tracking
                             of equipment assignments and maintains clear records of asset distribution from warehouse to
                             field staff.
+                        </p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-4">
+                <a href="{{ route('product-transfers.index') }}" class="text-decoration-none">
+                    <div class="integration-card p-4 text-center h-100">
+                        <div class="integration-icon">
+                            <i class="bi bi-arrow-left-right"></i>
+                        </div>
+                        <h2 class="integration-title">Transfer Produk</h2>
+                        <p class="integration-description">
+                            Transfer produk antar tim dengan mudah. Fitur ini memungkinkan perpindahan produk dari satu
+                            tim ke tim lainnya
+                            dengan pencatatan yang jelas dan terstruktur.
                         </p>
                     </div>
                 </a>

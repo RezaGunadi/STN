@@ -16,6 +16,7 @@ class Teams extends Migration
     {
         Schema::create('teams', function (Blueprint $table) {
             $table->id();
+            $table->string('name')->default('');
             $table->double('amount')->default(0);
             $table->bigInteger('group_id')->default(0);
             $table->bigInteger('user_id')->default(0);

@@ -2,13 +2,14 @@
 <html lang="en" data-bs-theme="light">
 
 <head>
-  <script src="../assets/js/color-modes.js"></script>
+  {{-- <script src="{{ asset('assets/js/color-modes.js') }}"></script> --}}
 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="">
   <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
   <meta name="generator" content="Hugo 0.122.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>STN Smart System</title>
   {{-- <title>{{ config('app.name', 'STN Smart System') }}</title> --}}
 
@@ -26,139 +27,215 @@
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
   <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/dashboard/">
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   @stack('css')
-
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
 
   <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet" />
 
-  {{-- <link href="../assets/dist/css/bootstrap.min.css" rel="stylesheet"> --}}
+
+  {{-- <link rel="stylesheet" href="{{ asset('resources/demos/style.css') }}"> --}}
+
+  <!-- SweetAlert2 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- Toast Data -->
+  <script>
+    window.toastData = @json(session('toast'));
+      console.log('Toast Data:', window.toastData); // Debug line
+  </script>
+
+  <!-- Scripts -->
+  <script src="{{ asset('js/app.js') }}" defer></script>
+  {{-- <script src="{{ asset('js/toast.js') }}" defer></script> --}}
 
   <style>
+    :root {
+      --primary-color: #8B0000;
+      --secondary-color: #4A0404;
+      --accent-color: #D61212;
+      --text-color: #333;
+      --light-bg: #f8f9fc;
+    }
+
+    body {
+      color: var(--text-color);
+    }
+
+    .select2-container {
+      height: 34px !important;
+      line-height: 34px !important;
+    }
+
+    .select2-container--default .select2-selection--single {
+      height: 34px !important;
+      line-height: 34px !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow .select2-selection__rendered {
+      height: 34px !important;
+      line-height: 34px !important;
+    }
+
+    .card {
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      border: none;
+      border-radius: 0.75rem;
+      background: #fff;
+    }
+
+    .card-header {
+      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+      color: white !important;
+      border-radius: 0.75rem 0.75rem 0 0 !important;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .form-label {
+      font-weight: 600;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+      border-radius: 0.5rem;
+      border: 1px solid #d1d3e2;
+      padding: 0.75rem 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.2rem rgba(139, 0, 0, 0.25);
+    }
+
+    .table {
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+
+    .table thead th {
+      background-color: var(--light-bg);
+      border-bottom: 2px solid #e3e6f0;
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    .table tbody tr:hover {
+      background-color: var(--light-bg);
+    }
+
     .btn-primary {
-      background-color: #D61212;
-      border-color: #D61212;
+      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      transition: all 0.3s;
     }
 
-    .bd-placeholder-img {
-      font-size: 1.125rem;
-      text-anchor: middle;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      user-select: none;
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
     }
 
-    @media (min-width: 768px) {
-      .bd-placeholder-img-lg {
-        font-size: 3.5rem;
-      }
+    .navbar {
+      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color)) !important;
     }
 
-    .b-example-divider {
-      width: 100%;
-      height: 3rem;
-      background-color: rgba(0, 0, 0, .1);
-      border: solid rgba(0, 0, 0, .15);
-      border-width: 1px 0;
-      box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
-    }
-
-    .b-example-vr {
-      flex-shrink: 0;
-      width: 1.5rem;
-      height: 100vh;
-    }
-
-    .bi {
-      vertical-align: -.125em;
-      fill: currentColor;
-    }
-
-    .nav-scroller {
-      position: relative;
-      z-index: 2;
-      height: 2.75rem;
-      overflow-y: hidden;
-    }
-
-    .nav-scroller .nav {
-      display: flex;
-      flex-wrap: nowrap;
-      padding-bottom: 1rem;
-      margin-top: -1px;
-      overflow-x: auto;
-      text-align: center;
-      white-space: nowrap;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .btn-bd-primary {
-      --bd-violet-bg: #712cf9;
-      --bd-violet-rgb: 112.520718, 44.062154, 249.437846;
-
-      --bs-btn-font-weight: 600;
-      --bs-btn-color: var(--bs-white);
-      --bs-btn-bg: var(--bd-violet-bg);
-      --bs-btn-border-color: var(--bd-violet-bg);
-      --bs-btn-hover-color: var(--bs-white);
-      --bs-btn-hover-bg: #6528e0;
-      --bs-btn-hover-border-color: #6528e0;
-      --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
-      --bs-btn-active-color: var(--bs-btn-hover-color);
-      --bs-btn-active-bg: #5a23c8;
-      --bs-btn-active-border-color: #5a23c8;
-    }
-
-    .bd-mode-toggle {
-      z-index: 1500;
-    }
-
-    .bd-mode-toggle .dropdown-menu .active .bi {
-      display: block !important;
-    }
-
-    ul.ui-autocomplete.ui-menu {
-
-      font-weight: 300;
-      font-size: 14px;
-      line-height: 20px;
-      border-radius: 12px;
-      letter-spacing: 0.25px;
-      z-index: 399999999;
-
-      color: #000000;
-    }
-
-    ul.ui-autocomplete.ui-menu {
-      /* margin-top: 16px; */
-      padding-top: 20px;
-      padding-bottom: 4px;
-      background-color: #FFFFFF;
-      border-radius: 12px;
-      cursor: pointer;
-    }
-
-    ul.ui-autocomplete.ui-menu li {
-      /* margin-top: 16px; */
-      margin-left: 18px;
-      margin-right: 18px;
-      margin-bottom: 16px;
-      cursor: pointer;
-      caret-color: white;
-    }
-
-    .btn {
-      border-radius: 8px;
+    .sidebar {
+      background: #fff;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     }
 
     .nav-link {
-      font-size: 14px !important;
+      color: var(--text-color) !important;
+      transition: all 0.3s ease;
+      font-size: 1.2rem !important;
+    }
+
+    .nav-link:hover {
+      color: var(--primary-color) !important;
+      background-color: var(--light-bg);
+    }
+
+    .nav-link.active {
+      color: var(--primary-color) !important;
+      font-weight: 600;
     }
 
     .sidebar-heading {
-      font-size: 16px !important;
+      color: var(--primary-color);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 1.3rem !important;
+    }
+
+    /* Additional elegant styles */
+    .toast {
+      border-radius: 0.5rem;
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .alert {
+      border-radius: 0.5rem;
+      border: none;
+    }
+
+    .select2-container--default .select2-selection--single {
+      border-radius: 0.5rem;
+      border: 1px solid #d1d3e2;
+      height: calc(2.25rem + 2px);
+    }
+
+    .btn-info {
+      background: linear-gradient(90deg, #36d1dc 0%, #5b86e5 100%);
+      border: none;
+      color: #fff;
+      font-weight: 500;
+      box-shadow: 0 2px 4px rgba(91, 134, 229, 0.3);
+      transition: all 0.2s ease;
+    }
+
+    .btn-info:hover {
+      background: linear-gradient(90deg, #5b86e5 0%, #36d1dc 100%);
+      color: #fff;
+      box-shadow: 0 4px 8px rgba(91, 134, 229, 0.4);
+    }
+
+    .btn-info:active,
+    .btn-info:focus {
+      background: linear-gradient(90deg, #5b86e5 0%, #36d1dc 100%);
+      color: #fff;
+      box-shadow: 0 2px 4px rgba(91, 134, 229, 0.3);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(90deg, #6c757d 0%, #495057 100%);
+      border: none;
+      color: #fff;
+      font-weight: 500;
+      box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: linear-gradient(90deg, #495057 0%, #6c757d 100%);
+      color: #fff;
+      box-shadow: 0 4px 8px rgba(108, 117, 125, 0.4);
+    }
+
+    .btn-secondary:active,
+    .btn-secondary:focus {
+      background: linear-gradient(90deg, #495057 0%, #6c757d 100%);
+      color: #fff;
+      box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
     }
   </style>
 
@@ -166,7 +243,24 @@
   <!-- Custom styles for this template -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.min.css" rel="stylesheet">
   <!-- Custom styles for this template -->
-  <link href="/assets/dashboard.css" rel="stylesheet">
+  <link href="{{ asset('assets/dashboard.css') }}" rel="stylesheet">
+  {{-- <!-- CSS Dependencies -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+    rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" rel="stylesheet">
+  
+  <!-- JavaScript Dependencies -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
+   --}}
+  <!-- Custom CSS -->
 </head>
 
 <body>
@@ -306,7 +400,7 @@
   <header class="navbar sticky-top bg-dark flex-md-nowrap p-0 shadow" style="margin-bottom: 0px" data-bs-theme="dark">
     <div class="row justify-content-between w-100 px-3">
       <audio id="scan" src="{{ URL::To('/assets/sound/scan.mp3') }}"></audio>
-      <a class="col navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6 text-white" href="{{ URL::To('/') }}">
+      <a class="col navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-2 text-white" href="{{ URL::To('/') }}">
 
         {{-- STN Smart System --}}
         <img src="{{ asset('assets/img/stn_long.png') }}" {{-- class="img-fluid" --}}
@@ -399,12 +493,9 @@
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a @if($title=='product' ) style="color: #0b2b2b; font-weight: 600" @else
+                  <a @if ($title=='product' ) style="color: #0b2b2b; font-weight: 600" @else
                     style="color: #000; font-weight: 400" @endif style="color: #0b2b2b"
                     class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/list-product') }}">
-                    {{-- <svg class="bi">
-                    <use xlink:href="#cart" />
-                  </svg> --}}
                     <div class="d-inline-block pe-2 pb-2">
                       @if ($title == 'product')
                       <i class="bi bi-cart-fill"></i>
@@ -413,6 +504,21 @@
                       @endif
                     </div>
                     Products
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a @if ($title=='order' ) style="color: #0b2b2b; font-weight: 600" @else
+                    style="color: #000; font-weight: 400" @endif style="color: #0b2b2b"
+                    class="nav-link d-flex align-items-center gap-2" href="{{ route('orders.index') }}">
+                    <div class="d-inline-block pe-2 pb-2">
+                      @if ($title == 'order')
+                      <i class="bi bi-receipt-cutoff"></i>
+                      {{-- <i class="bi bi-receipt-fill"></i> --}}
+                      @else
+                      <i class="bi bi-receipt"></i>
+                      @endif
+                    </div>
+                    Orders
                   </a>
                 </li>
                 <li class="nav-item">
@@ -433,22 +539,48 @@
                   </a>
                 </li>
                 <li class="nav-item">
+                  <a @if ($title=='team' ) style="color: #0b2b2b; font-weight: 600" @else
+                    style="color: #000; font-weight: 400" @endif style="color: #0b2b2b"
+                    class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/team-group') }}">
+                    {{-- <svg class="bi">
+                    <use xlink:href="#people" />
+                  </svg> --}}
+                    <div class="d-inline-block pe-2 pb-2">
+                      @if ($title == 'team')
+                      <i class="bi bi-people-fill"></i>
+                      @else
+                      <i class="bi bi-people"></i>
+                      @endif
+                    </div>
+                    Team
+                  </a>
+                </li>
+                <li class="nav-item">
                   <a @if ($title=='integration' ) style="color: #0b2b2b; font-weight: 600" @else
                     style="color: #000; font-weight: 400" @endif style="color: #0b2b2b"
                     class="nav-link d-flex align-items-center gap-2" href="{{ URL::To('/integration-menu') }}">
-                    {{-- <svg class="bi">
-                    <use xlink:href="#puzzle" />
-                  </svg>
-                   --}}
                     <div class="d-inline-block pe-2 pb-2">
                       @if ($title == 'integration')
                       <i class="bi bi-puzzle-fill"></i>
                       @else
-                      {{-- <i class="bi bi-people"></i> --}}
                       <i class="bi bi-puzzle"></i>
                       @endif
                     </div>
                     Integrations
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a @if ($title=='vendor' ||$title=="Vendor" ) style="color: #0b2b2b; font-weight: 600" @else
+                    style="color: #000; font-weight: 400" @endif style="color: #0b2b2b"
+                    class="nav-link d-flex align-items-center gap-2" href="{{ route('vendors.index') }}">
+                    <div class="d-inline-block pe-2 pb-2">
+                      @if ($title == 'vendor' || $title == 'Vendor')
+                      <i class="bi bi-shop-fill"></i>
+                      @else
+                      <i class="bi bi-shop"></i>
+                      @endif
+                    </div>
+                    Vendors
                   </a>
                 </li>
               </ul>
@@ -595,693 +727,112 @@
 
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
           @yield('content')
-          <div class="toast align-items-center" role="alert" aria-live="assertive" id="toast" aria-atomic="true">
-            <div class="d-flex">
-              <div class="toast-body">
-                Hello, world! This is a toast message.
-              </div>
-              <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-          </div>
-          {{-- <div
-          class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-          <h1 class="h2">Dashboard</h1>
-          <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group me-2">
-              <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>
-              <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
-            </div>
-            <button type="button"
-              class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1">
-              <svg class="bi">
-                <use xlink:href="#calendar3" />
-              </svg>
-              This week
-            </button>
-          </div>
-        </div>
-
-        <canvas class="my-4 w-100" id="myChart" width="900" height="380"></canvas>
-
-        <h2>Section title</h2>
-        <div class="table-responsive small">
-          <table class="table table-striped table-sm">
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">Header</th>
-                <th scope="col">Header</th>
-                <th scope="col">Header</th>
-                <th scope="col">Header</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>1,001</td>
-                <td>random</td>
-                <td>data</td>
-                <td>placeholder</td>
-                <td>text</td>
-              </tr>
-              <tr>
-                <td>1,002</td>
-                <td>placeholder</td>
-                <td>irrelevant</td>
-                <td>visual</td>
-                <td>layout</td>
-              </tr>
-              <tr>
-                <td>1,003</td>
-                <td>data</td>
-                <td>rich</td>
-                <td>dashboard</td>
-                <td>tabular</td>
-              </tr>
-              <tr>
-                <td>1,003</td>
-                <td>information</td>
-                <td>placeholder</td>
-                <td>illustrative</td>
-                <td>data</td>
-              </tr>
-              <tr>
-                <td>1,004</td>
-                <td>text</td>
-                <td>random</td>
-                <td>layout</td>
-                <td>dashboard</td>
-              </tr>
-              <tr>
-                <td>1,005</td>
-                <td>dashboard</td>
-                <td>irrelevant</td>
-                <td>text</td>
-                <td>placeholder</td>
-              </tr>
-              <tr>
-                <td>1,006</td>
-                <td>dashboard</td>
-                <td>illustrative</td>
-                <td>rich</td>
-                <td>data</td>
-              </tr>
-              <tr>
-                <td>1,007</td>
-                <td>placeholder</td>
-                <td>tabular</td>
-                <td>information</td>
-                <td>irrelevant</td>
-              </tr>
-              <tr>
-                <td>1,008</td>
-                <td>random</td>
-                <td>data</td>
-                <td>placeholder</td>
-                <td>text</td>
-              </tr>
-              <tr>
-                <td>1,009</td>
-                <td>placeholder</td>
-                <td>irrelevant</td>
-                <td>visual</td>
-                <td>layout</td>
-              </tr>
-              <tr>
-                <td>1,010</td>
-                <td>data</td>
-                <td>rich</td>
-                <td>dashboard</td>
-                <td>tabular</td>
-              </tr>
-              <tr>
-                <td>1,011</td>
-                <td>information</td>
-                <td>placeholder</td>
-                <td>illustrative</td>
-                <td>data</td>
-              </tr>
-              <tr>
-                <td>1,012</td>
-                <td>text</td>
-                <td>placeholder</td>
-                <td>layout</td>
-                <td>dashboard</td>
-              </tr>
-              <tr>
-                <td>1,013</td>
-                <td>dashboard</td>
-                <td>irrelevant</td>
-                <td>text</td>
-                <td>visual</td>
-              </tr>
-              <tr>
-                <td>1,014</td>
-                <td>dashboard</td>
-                <td>illustrative</td>
-                <td>rich</td>
-                <td>data</td>
-              </tr>
-              <tr>
-                <td>1,015</td>
-                <td>random</td>
-                <td>tabular</td>
-                <td>information</td>
-                <td>text</td>
-              </tr>
-            </tbody>
-          </table>
-        </div> --}}
+          {{-- Success messages are now handled by SweetAlert2 --}}
         </main>
       </div>
     </div>
 
-
-    <div style="position: fixed; bottom: 0;" class="w-100">
+    <div style="position: fixed; bottom: 20px; right: 20px; z-index: 1050; min-width: 300px; max-width: 500px;">
       @if ($errors->any())
-      <div class="mb-0 alert alert-danger" id="validator-error">
-        <div class="row">
-          <div class="col">
-
-            <ul>
+      <div class="alert alert-danger shadow-lg rounded-lg border-0 fade show" role="alert" id="validator-error">
+        <div class="d-flex align-items-center">
+          <div class="flex-grow-1">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            <strong>Error</strong>
+            <ul class="mb-0 mt-2 ps-3">
               @foreach ($errors->all() as $error)
-              <li>{{ $error }}</li>
+              <li class="text-sm">{{ $error }}</li>
               @endforeach
             </ul>
           </div>
-          <div class="col-auto" style="cursor: pointer; font-size: 16px; font-weight: 600;" id="validator-error-close">
-            X
-          </div>
+          <button type="button" class="btn-close" id="validator-error-close" aria-label="Close"></button>
         </div>
+      </div>
+      @endif
 
-      </div>
-      @endif
       @if (session('error'))
-      <div class="mb-0 alert alert-danger">
-        {{ session('error') }}
+      <div class="alert alert-danger shadow-lg rounded-lg border-0 fade show" role="alert">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-exclamation-circle-fill me-2"></i>
+          <div class="flex-grow-1">{{ session('error') }}</div>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
       </div>
       @endif
-      @if (\Session::has('success'))
-      <div class="mb-0 alert alert-success">
-        <ul>
-          <li>{!! \Session::get('success') !!}</li>
-        </ul>
+      @if (session('success'))
+      <div class="alert alert-success shadow-lg rounded-lg border-0 fade show" role="alert">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-exclamation-circle-fill me-2"></i>
+          <div class="flex-grow-1">{{ session('error') }}</div>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
       </div>
       @endif
     </div>
   </div>
-  {{-- <script src="../assets/dist/js/bootstrap.bundle.min.js"></script> --}}
 
-  {{-- <script src="http://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script> --}}
-  <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
-  <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>
-  @stack('script')
-  <script>
-    function play() {
-          var audio = document.getElementById("scan");
-          audio.play();
-        }
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.2/dist/chart.umd.js"
-    integrity="sha384-eI7PSr3L1XLISH8JdDII5YN/njoSsxfbrkCTnJrzXt+ENP5MOVBxD+l6sEG4zoLp" crossorigin="anonymous">
-  </script>
-  <script src="/assets/dashboard.js"></script>
-  {{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script> --}}
+  <!-- Core JavaScript -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.2/dist/chart.umd.js"></script>
+  <script src="{{ asset('js/app.js') }}" defer></script>
+  <script src="{{ asset('assets/dashboard.js') }}"></script>
 
   <script>
-    const toastLiveExample = document.getElementById('toast')
-    const toastTrigger = document.getElementById('inputData')
-    if (toastTrigger) {
-    const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastLiveExample)
-    toastTrigger.addEventListener('click', () => {
-    toastBootstrap.show()
-    })
-    }
-  </script>
-  <script>
-    $(document).ready(function() {
-      $('#validator-error-close').click( function() {
-        $('#validator-error').addClass('d-none');
-      });
-      $('#filter_btn').click( function() {
-        $('#filterForm').addClass('d-block');
-        $('#filterForm').removeClass('d-none');
-        $('#filter_btn').addClass('d-none');
-        $('#filter_btn').removeClass('d-inline-block');
-        $('#filter_btn_hide').addClass('d-inline-block');
-        $('#filter_btn_hide').removeClass('d-none');
-      });
-      $('#filter_btn_hide').click( function() {
-        $('#filterForm').removeClass('d-block');
-        $('#filterForm').addClass('d-none');
-        $('#filter_btn_hide').addClass('d-none');
-        $('#filter_btn_hide').removeClass('d-inline-block');
-        $('#filter_btn').removeClass('d-none');
-        $('#filter_btn').addClass('d-inline-block');
-      });
-      $( ".no-access" ).click(function() {
-        alert( "Anda tidak memiliki hak akses" );
-      });
-    });
-  </script>
-  {{-- <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.js"></script> --}}
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
-  {{-- <script type="text/javascript">
-    var timer;
-    $('#user_search').keyup(function() {
-      clearTimeout(timer);
-        $("#user_search").autocomplete({
-            source: '{!!URL::route("auto_complete_user")!!}',
-                focus: function( event, ui ) {
-                return false;
-            },
-            select: function( event, ui ) {
-                window.location.href = ui.item.slug;
-            }
-        }).data( "ui-autocomplete" )._renderItem = function( ul, item ) {
-                var url_a = '{{ route("detail_blog",  ":slug") }}';
-  url_a = url_a.replace(':slug', item.slug);
-  var inner_html = '<a href="' + url_a + '">
-    <div class="row pe-0 pe-md-5 align-items-center">
-      <div class="col-auto pe-0"><img style="border-radius: 8px; height: 56px; width:56px;" src="' + item.thumbnail + '"
-          alt="Thumbnail image"></div>
-      <div class="col">
-        <idv class="s14-500" style="letter-spacing: 0.25px;color: #25282B;">' + item.title + '</idv>
-        <div style="color: #52575C;letter-spacing: 0.15px;" class="s12-400">' + item.cuplikan + '</div>
-      </div>
-    </div>
-  </a>';
-  return $( "<li></li>" )
-  .data( "item.autocomplete", item )
-  .append(inner_html)
-  .appendTo( ul );
-  };
-  });
-  </script>
-  <script type="text/javascript">
-    var timer;
-    $('#product_search').keyup(function() {
-      clearTimeout(timer);
-        $("#product_search").autocomplete({
-            source: '{!!URL::route('auto_complete_user')!!}',
-                focus: function( event, ui ) {
-                return false;
-            },
-            select: function( event, ui ) {
-                window.location.href = ui.item.slug;
-            }
-        }).data( "ui-autocomplete" )._renderItem = function( ul, item ) {
-                var url_a = '{{ route("detail_blog",  ":slug") }}';
-                url_a = url_a.replace(':slug', item.slug);
-            var inner_html = '<a href="' + url_a + '" ><div class="row pe-0 pe-md-5 align-items-center"><div class="col-auto pe-0"><img style="border-radius: 8px; height: 56px; width:56px;" src="' + item.thumbnail + '" alt="Thumbnail image"></div><div class="col"><idv class="s14-500" style="letter-spacing: 0.25px;color: #25282B;">' + item.title + '</idv><div style="color: #52575C;letter-spacing: 0.15px;" class="s12-400">' + item.cuplikan + '</div></div></div></a>';
-            return $( "<li></li>" )
-                    .data( "item.autocomplete", item )
-                    .append(inner_html)
-                    .appendTo( ul );
-        };
-    });
-  </script>
-  <script type="text/javascript">
-    var timer;
-    $('#user_search').keyup(function() {
-      clearTimeout(timer);
-        $("#user_search").autocomplete({
-            source: '{!!URL::route("auto_complete_user")!!}',
-                focus: function( event, ui ) {
-                return false;
-            },
-            select: function( event, ui ) {
-                window.location.href = ui.item.slug;
-            }
-        }).data( "ui-autocomplete" )._renderItem = function( ul, item ) {
-                var url_a = '{{ route("detail_blog",  ":slug") }}';
-                url_a = url_a.replace(':slug', item.slug);
-            var inner_html = '<a href="' + url_a + '" ><div class="row pe-0 pe-md-5 align-items-center"><div class="col-auto pe-0"><img style="border-radius: 8px; height: 56px; width:56px;" src="' + item.thumbnail + '" alt="Thumbnail image"></div><div class="col"><idv class="s14-500" style="letter-spacing: 0.25px;color: #25282B;">' + item.title + '</idv><div style="color: #52575C;letter-spacing: 0.15px;" class="s12-400">' + item.cuplikan + '</div></div></div></a>';
-            return $( "<li></li>" )
-                    .data( "item.autocomplete", item )
-                    .append(inner_html)
-                    .appendTo( ul );
-        };
-    });
-  </script> --}}
-  <script type="text/javascript">
-    $('#category_search').select2({
-      placeholder: 'Cari kategori',
-      ajax: {
-        url: '/auto-complete-category',
-        dataType: 'json',
-        delay: 250,
-        processResults: function (data) {
-          return {
-            results:  $.map(data, function (item) {
-              return {
-                text: item.name,
-                id: item.name
-              }
-            })
-          };
-        },
-        cache: true
-      }
-    });
-  
-  </script>
-  <script type="text/javascript">
-    $('#brand_search').select2({
-      placeholder: 'Cari merek',
-      ajax: {
-        url: '/auto-complete-brand',
-        dataType: 'json',
-        delay: 250,
-        processResults: function (data) {
-          return {
-            results:  $.map(data, function (item) {
-              return {
-                text: item.name,
-                id: item.name
-              }
-            })
-          };
-        },
-        cache: true
-      }
-    });
-  
-  </script>
-  <script type="text/javascript">
-    $('#type_search').select2({
-      placeholder: 'Cari tipe',
-      ajax: {
-        url: '/auto-complete-type',
-        dataType: 'json',
-        delay: 250,
-        processResults: function (data) {
-          return {
-            results:  $.map(data, function (item) {
-              return {
-                text: item.name,
-                id: item.name
-              }
-            })
-          };
-        },
-        cache: true
-      }
-    });
-  
-  </script>
-  <script type="text/javascript">
-    var $userSelect =  $('#user_search').select2({
-      placeholder: 'Cari pengguna',
-      ajax: {
-        url: '/auto-complete-user',
-        dataType: 'json',
-        delay: 250,
-        processResults: function (data) {
-          return {
-            results:  $.map(data, function (item) {
-              return {
-                text: item.name+'('+item.email+')',
-                id: item.id
-              }
-            })
-          };
-        },formatSelection: function(element){
-        // return element.text + ' (' + element.id + ')';
-        },
-        // success:function(response){
-        
-        // }
-        cache: true,
-        templateResult: formatRepoUser,
-      }
-    });
-  $userSelect.on("select2:select", function (e) { formatRepoUser("select2:select", e); });
-  function formatRepoUser (selectName,data) {
-  var parsedTestuser = data.params.data.text.split(',');
-
-  // $('#remove-staf-from-search-'+data.params.data.id).click(function (e) {
-  // e.preventDefault();
-  // $("#input-staf-id-bertanggungjawab-"+data.params.data.id).remove();
-  // $("#staff-data-show-new-"+data.params.data.id).remove('d-none');
-  
-  // });
-  $('#body-table').append(`<input type="hidden" id="input-staf-id-`+data.params.data.id+`" name="staf_ids[]" value="`+data.params.data.id+`">`);
-  $("#staf-data").append(
-  `<div id="staff-data-show-`+data.params.data.id+`">`+
-    parsedTestuser[0]+`  <button class="btn btn-secondary py-2" style="font-size:9px;" id="remove-staf-from-search-`+data.params.data.id+`">
-                                                        Remove
-                                                    </button></div>`
-                  );
-  $('#remove-staf-from-search-'+data.params.data.id).click(function (e) {
-  e.preventDefault();
-  // $( "input[name='sortby']").remove();
-  $("#staff-data-show-"+data.params.data.id).addClass("d-none");
-  $("#input-staf-id-"+data.params.data.id).remove();
-  });
-        }
-  </script>
-  <script type="text/javascript">
-    // $("#search-product").select2({
-    // placeholder: "My Select 2",
-    // multiple: false,
-    // minimumInputLength: 1,
-    // ajax: {
-    // url: "/auto-complete-product",
-    // dataType: 'json',
-    // quietMillis: 250,
-    // data: function(term, page) {
-    // return {
-    // q: term,
-    // };
-    // },
-    // results: function(data, page) {
-    // return {results: data};
-    // },
-    // cache: true
-    // },
-    // formatResult: function(element){
-    // return element.text + ' (' + element.id + ')';
-    // },
-    // formatSelection: function(element){
-    // return element.text + ' (' + element.id + ')';
-    // },
-    // escapeMarkup: function(m) {
-    // return m;
-    // }
-    // });
-   var $eventSelect =  $('#search-product').select2(
-      
-    {
-      placeholder: 'Cari Produk',
-      minimumInputLength: 1,
-      multiple:false,
-      ajax: {
-        url: '/auto-complete-product',
-        dataType: 'json',
-        delay: 250,
-        processResults: function (data) {
-          return {
-            results:  $.map(data, function (item) {
-            
-              return {
-                text: item.code +', '+item.product_name+', '+item.status,
-                id: item.id,
-              }
-
-            })
-          };
-        },
-        formatSelection: function(element){
-        // return element.text + ' (' + element.id + ')';
-        },
-        // success:function(response){
-        
-        // }
-        cache: true, 
-        templateResult: formatRepo,
-      }
-    });
-    $eventSelect.on("select2:select", function (e) { formatRepo("select2:select", e); });
-    function formatRepo (selectName,data) {
-      // alert(data.data);
-      console.log(selectName);
-      console.log(data);
-      console.log(data.params);
-      console.log(data.params.data);
-      console.log(data.params.data.text);
-      console.log(data.data);
-      // var itemResult  ="["+data.params.data.text+"]";
-      var parsedTest =  data.params.data.text.split(',');;
-
-      
-      // if (data.loading) {
-      //   return data.text;
-      // }
-      // alert('Selecting: ' , e.params.args.data);
-    // $('#body-table').append(`<tr id="table-`+data.id+`">
-    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-    //     `+data.code+`</th>
-    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-    //     `+data.product_name+`</th>
-    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-    //     `+data.status+`</th>
-    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-    //     `+data.is_consume+`</th>
-    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-    //     `+data.available+`</th>
-    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-    //     <button class="btn btn-secondary" id="remove-`+data.id+`"">
-    //                                         Delete
-    //                                     </button>
-    //                                 </th>
-    //                             </tr>`);
-    //                             $('#body-table').append(`<input type=" hidden" id="input-id-`+data.id+`" name="id[]" 
-    //       value="`+data.id+`">`);
-    //       $('#remove-'+data.id).click(function (e) {
-    //       e.preventDefault();
-    //       $( "input[name='sortby']").remove();
-    //       $("#table-"+data.id).addClass("d-none");
-    //       $("#input-id-"+data.id).remove();
-    //       });
-    $('#body-table').append(`<tr id="table-`+data.params.data.id+`">
-      <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-        `+parsedTest[0]+`</th>
-      <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-        `+parsedTest[1]+`</th>
-      <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-        `+parsedTest[2]+`</th>
-      <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-        <button class="btn btn-secondary" id="remove-`+data.params.data.id+`"">
-                                            Delete
-                                        </button>
-                                    </th>
-                                </tr>`);
-                                $('#body-table').append(`<input type="hidden" id="input-id-`+data.params.data.id+`" name="id[]" 
-          value="`+data.params.data.id+`">`);
-          $('#remove-'+data.params.data.id).click(function (e) {
-          e.preventDefault();
-          $( "input[name='sortby']").remove();
-          $("#table-"+data.params.data.id).addClass("d-none");
-          $("#input-id-"+data.params.data.id).remove();
-          });
-          // return dosomething;
-    // $('#myselect2').val(selected).trigger('change');
-    // $(document.body).on("change","#search-product",function(){
-    // alert(this.value);
-    // });
-    // $('#search-product').on("select2-selecting", function(e) {
-    // console.log('Selecting');
-    // $("#search-product").live('change', function(){
-    // alert(this.value);
-    // $('.select2').on('select2:selecting', function(e) {
-    // alert('Selecting: ' , e.params.args.data);
-    // });
-
-    // $('#body-table').append(`<tr id="table-`+data.id+`">
-    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-    //     `+data.code+`</th>
-    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-    //     `+data.product_name+`</th>
-    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-    //     `+data.status+`</th>
-    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-    //     `+data.is_consume+`</th>
-    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-    //     `+data.available+`</th>
-    //   <th scope="col" style="text-align: center;font-weight: 400!important;" class=" text-capitalize">
-    //     <button class="btn btn-secondary" id="remove-`+data.id+`"">
-    //                                     Delete
-    //                                 </button>
-    //                             </th>
-    //                         </tr>`);
-    //                         $('#body-table').append(`<input type=" hidden" id="input-id-`+data.id+`" name="id[]"
-    //       value="`+data.id+`">`);
-    //       $('#remove-'+data.id).click(function (e) {
-    //       e.preventDefault();
-    //       $( "input[name='sortby']").remove();
-    //       $("#table-"+data.id).addClass("d-none");
-    //       $("#input-id-"+data.id).remove();
-    //       });
-          // });
-    
-    }
-  </script>
-  <script>
-    function oneDot(input) {
-      // Remove all non-numeric characters
-      var value = String(input.value.replace(/[^0-9]/g, ''));
-      
-      // Format with thousand separators
-      var result = '';
-      var length = value.length;
-      
-      for (var i = 0; i < length; i++) {
-        if (i > 0 && (length - i) % 3 === 0) {
-          result += '.';
-        }
-        result += value[i];
-      }
-      // Update the input value
-      input.value = result;
-    }
-  </script>
-  {{-- <script type="text/javascript">
-      var timer;
-        $('#user_search').keyup(function() {
-          clearTimeout(timer);
-            $("#user_search").autocomplete({
-                source: '{!!URL::route("auto_complete_user")!!}',
-                    focus: function( event, ui ) {
-                    return false;
-                },
-                select: function( event, ui ) {
-                    window.location.href = ui.item.slug;
+    // Initialize Chart.js with proper error handling
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            // Check if canvas elements exist before initializing charts
+            const chartElements = document.querySelectorAll('canvas[data-chart]');
+            chartElements.forEach(canvas => {
+                if (canvas && canvas.getContext) {
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        // Your chart initialization code here
+                        // Example:
+                        // new Chart(ctx, {
+                        //     type: 'line',
+                        //     data: {...},
+                        //     options: {...}
+                        // });
+                    }
                 }
-            }).data( "ui-autocomplete" )._renderItem = function( ul, item ) {
-                    var url_a = '{{ route("detail_blog",  ":slug") }}';
-  url_a = url_a.replace(':slug', item.slug);
-  var inner_html = '<a href="' + url_a + '">
-    <div class="row pe-0 pe-md-5 align-items-center">
-      <div class="col-auto pe-0"><img style="border-radius: 8px; height: 56px; width:56px;" src="' + item.thumbnail + '"
-          alt="Thumbnail image"></div>
-      <div class="col">
-        <idv class="s14-500" style="letter-spacing: 0.25px;color: #25282B;">' + item.title + '</idv>
-        <div style="color: #52575C;letter-spacing: 0.15px;" class="s12-400">' + item.cuplikan + '</div>
-      </div>
-    </div>
-  </a>';
-  return $( "<li></li>" )
-  .data( "item.autocomplete", item )
-  .append(inner_html)
-  .appendTo( ul );
-  };
-  });
-  </script> --}}
-  {{-- <script type="text/javascript">
-    $('#product_search').select2({
-      placeholder: 'Cari pengguna',
-      ajax: {
-        url: '/auto-complete-product',
-        dataType: 'json',
-        delay: 250,
-        processResults: function (data) {
-          return {
-            results:  $.map(data, function (item) {
-              return {
-                text: item.email,
-                id: item.id
-              }
-            })
-          };
-        },
-        cache: true
-      }
+            });
+        } catch (error) {
+            console.error('Chart initialization error:', error);
+        }
     });
-  
-  </script> --}}
+
+    // Your existing scripts
+    $(document).ready(function() {
+        $('#validator-error-close').click(function() {
+            $('#validator-error').addClass('d-none');
+        });
+        $('#filter_btn').click( function() {
+            $('#filterForm').addClass('d-block');
+            $('#filterForm').removeClass('d-none');
+            $('#filter_btn').addClass('d-none');
+            $('#filter_btn').removeClass('d-inline-block');
+            $('#filter_btn_hide').addClass('d-inline-block');
+            $('#filter_btn_hide').removeClass('d-none');
+        });
+        $('#filter_btn_hide').click( function() {
+            $('#filterForm').removeClass('d-block');
+            $('#filterForm').addClass('d-none');
+            $('#filter_btn_hide').addClass('d-none');
+            $('#filter_btn_hide').removeClass('d-inline-block');
+            $('#filter_btn').removeClass('d-none');
+            $('#filter_btn').addClass('d-inline-block');
+        });
+        $( ".no-access" ).click(function() {
+            alert( "Anda tidak memiliki hak akses" );
+        });
+    });
+  </script>
+  @stack('script')
 </body>
 
 </html>

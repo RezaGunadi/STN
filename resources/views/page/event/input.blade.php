@@ -1,6 +1,6 @@
 @extends('layouts.index')
 @push('css')
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+
 <link rel="stylesheet" href="/resources/demos/style.css">
 <style>
     .ui-autocomplete {
@@ -184,11 +184,13 @@ consumable --}}
                             <div class="card-body">
                                 <div class="row mb-3">
                                     <div class="col-md-12">
-                                        <div class="input-group">
-                                            <input type="text" id="product_search" class="form-control"
-                                                placeholder="Cari produk...">
-                                            <div class="input-group-append">
-                                                <button class="btn btn-primary" type="button"
+                                        <div class="row">
+                                            <div class="col-md-10">
+                                                <input type="text" id="product_search" class="form-control"
+                                                    placeholder="Cari produk...">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button class="btn btn-primary w-100" type="button"
                                                     id="search_product">Cari</button>
                                             </div>
                                         </div>
@@ -233,14 +235,14 @@ consumable --}}
                         </div>
                     </div>
                 </div>
-                <div class="event-actions">
+                {{-- <div class="event-actions">
                     <button type="button" class="btn btn-success" id="startEventBtn" disabled>
                         <i class="fas fa-play"></i> Start Event
                     </button>
                     <button type="button" class="btn btn-danger" id="closeEventBtn" disabled>
                         <i class="fas fa-stop"></i> Close Event
                     </button>
-                </div>
+                </div> --}}
                 <div class="alert alert-success" id="successAlert" role="alert"></div>
                 <div class="alert alert-danger" id="errorAlert" role="alert"></div>
                 <button class="btn btn-primary text-capitalize mt-5 w-100" id="inputData" type="submit">
@@ -273,7 +275,7 @@ consumable --}}
             }
             
             $.ajax({
-                url: '{{ URL::To("/auto-complete-product") }}',
+                url: '{{ URL::To("/auto-complete-product-event") }}',
                 type: 'GET',
                 data: { q: searchTerm },
                 success: function(response) {
@@ -366,6 +368,7 @@ consumable --}}
                         <td>${product.category}</td>
                         <td>${product.status}</td>
                         <td>
+                            <input type="hidden" name="product_id[]" value="${product.id}">
                             <input type="number" class="form-control form-control-sm product-discount" 
                                 name="discount[${product.id}]" min="0" step="0.01" placeholder="Diskon">
                         </td>
@@ -440,7 +443,7 @@ consumable --}}
 
         // Function to format team data for display
         function formatTeamLabel(team) {
-            return `Team ${team.group_id} (${team.member.length} members)`;
+            return `${team.name} (${team.member.length} members)`;
         }
 
         // Starter team search
@@ -451,6 +454,8 @@ consumable --}}
                 
                 const filteredTeams = teams.filter(team => 
                     formatTeamLabel(team).toLowerCase().includes(searchTerm) ||
+                    // team.name.toLowerCase().includes(searchTerm)
+                    team.name.toLowerCase().includes(searchTerm) ||
                     team.member.some(member => 
                         member.name.toLowerCase().includes(searchTerm) ||
                         member.email.toLowerCase().includes(searchTerm)
@@ -535,57 +540,57 @@ consumable --}}
     $('#starter_team_search').on('change', updateEventButtons);
     $('#closer_team_search').on('change', updateEventButtons);
 
-    // Handle start event button click
-    $('#startEventBtn').click(function() {
-        if (!$(this).prop('disabled')) {
-            if (confirm('Are you sure you want to start this event?')) {
-                $.ajax({
-                    url: '{{ route("start_event") }}',
-                    method: 'POST',
-                    data: {
-                        _token: '{{ csrf_token() }}',
-                        event_id: '{{ $event->id ?? "" }}'
-                    },
-                    success: function(response) {
-                        showAlert('success', response.message);
-                        setTimeout(() => {
-                            location.reload();
-                        }, 2000);
-                    },
-                    error: function(xhr) {
-                        const response = xhr.responseJSON;
-                        showAlert('error', response.message || 'Failed to start event. Please try again.');
-                    }
-                });
-            }
-        }
-    });
+    // // Handle start event button click
+    // $('#startEventBtn').click(function() {
+    //     if (!$(this).prop('disabled')) {
+    //         if (confirm('Are you sure you want to start this event?')) {
+    //             $.ajax({
+    //                 url: '{{ route("start_event",['id' => 0]    ) }}',
+    //                 method: 'POST',
+    //                 data: {
+    //                     _token: '{{ csrf_token() }}',
+    //                     event_id: '{{ $event->id ?? "" }}'
+    //                 },
+    //                 success: function(response) {
+    //                     showAlert('success', response.message);
+    //                     setTimeout(() => {
+    //                         location.reload();
+    //                     }, 2000);
+    //                 },
+    //                 error: function(xhr) {
+    //                     const response = xhr.responseJSON;
+    //                     showAlert('error', response.message || 'Failed to start event. Please try again.');
+    //                 }
+    //             });
+    //         }
+    //     }
+    // });
 
-    // Handle close event button click
-    $('#closeEventBtn').click(function() {
-        if (!$(this).prop('disabled')) {
-            if (confirm('Are you sure you want to close this event?')) {
-                $.ajax({
-                    url: '{{ route("close_event") }}',
-                    method: 'POST',
-                    data: {
-                        _token: '{{ csrf_token() }}',
-                        event_id: '{{ $event->id ?? "" }}'
-                    },
-                    success: function(response) {
-                        showAlert('success', response.message);
-                        setTimeout(() => {
-                            location.reload();
-                        }, 2000);
-                    },
-                    error: function(xhr) {
-                        const response = xhr.responseJSON;
-                        showAlert('error', response.message || 'Failed to close event. Please try again.');
-                    }
-                });
-            }
-        }
-    });
+    // // Handle close event button click
+    // $('#closeEventBtn').click(function() {
+    //     if (!$(this).prop('disabled')) {
+    //         if (confirm('Are you sure you want to close this event?')) {
+    //             $.ajax({
+    //                 url: '{{ route("close_event",['id' => 0] ) }}',
+    //                 method: 'POST',
+    //                 data: {
+    //                     _token: '{{ csrf_token() }}',
+    //                     event_id: '{{ $event->id ?? "" }}'
+    //                 },
+    //                 success: function(response) {
+    //                     showAlert('success', response.message);
+    //                     setTimeout(() => {
+    //                         location.reload();
+    //                     }, 2000);
+    //                 },
+    //                 error: function(xhr) {
+    //                     const response = xhr.responseJSON;
+    //                     showAlert('error', response.message || 'Failed to close event. Please try again.');
+    //                 }
+    //             });
+    //         }
+    //     }
+    // });
 
     // Initial button state update
     updateEventButtons();

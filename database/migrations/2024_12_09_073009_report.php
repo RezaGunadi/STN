@@ -21,7 +21,7 @@ class Report extends Migration
             $table->integer('user_id');
             $table->bigInteger('price')->default(0);
             $table->integer('created_by');
-            $table->text('delete_reason');
+            $table->text('delete_reason')->nullable();
             $table->integer('deleted_by')->default(0);
             $table->integer('updated_by')->default(0);
             $table->timestamps();

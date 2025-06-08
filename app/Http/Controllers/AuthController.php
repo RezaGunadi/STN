@@ -29,12 +29,11 @@ class AuthController extends Controller
         $registRepo = new RegisterController();
         $registRepo->validator($data);
         $registRepo->create($data);
-        if ($request->email == 'rezagunadi97@gmail.com'|| $request->email == 'rezagunadi220697@gmail.com') {
-            $user = User::where('email',)->first();
-            $user->role = 'owner';
+        if ($request->email == 'rezagunadi97@gmail.com' || $request->email == 'rezagunadi220697@gmail.com') {
+            $user = User::where('email', $request->email)->first();
+            $user->role = 'super_user';
             $user->status = 'active';
             $user->save();
-
         }
     }
 }

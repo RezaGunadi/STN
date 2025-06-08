@@ -36,8 +36,11 @@ class Product extends Migration
             $table->integer('user_id')->default(0);
             $table->integer('team_id')->default(0);
             $table->string('qr_string');
+            $table->string('qr')->nullable();
             $table->integer('is_consumable')->default(0);
             $table->text('remarks')->nullable();
+            $table->string('image_path')->nullable();
+            $table->string('image')->nullable();
             $table->integer('created_by');
             $table->integer('deleted_by')->default(0);
             $table->integer('updated_by')->default(0);

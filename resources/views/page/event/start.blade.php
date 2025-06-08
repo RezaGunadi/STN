@@ -1,6 +1,6 @@
 @extends('layouts.index')
 @push('css')
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+
 <link rel="stylesheet" href="/resources/demos/style.css">
 
 @endpush
@@ -24,7 +24,7 @@ price
 status
 consumable --}}
                 <div class="card-body">
-                    <form action="{{ route('close_submit_event') }}" method="POST">
+                    <form action="{{ route('finalize_submit_event') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="event_id" value="{{ $event->id }}">
                         <div class="mb-3">
@@ -74,7 +74,7 @@ consumable --}}
                 </div> --}}
                 <div class="mb-3">
                     <label for="client" class="form-label text-capitalize">client</label>
-                    <input readonly type="text" @if ($event) value="{{ $event->client }}" @endif
+                    <input readonly type="text" @if ($event) value="{{ $event->clientData->name }}" @endif
                         class="form-control @error('client') is-invalid @enderror" required id="client" name="client"
                         placeholder="PT. XYZ">
                     @error('client')
@@ -102,6 +102,8 @@ consumable --}}
                                     class=" text-capitalize">type</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
                                     class=" text-capitalize">description</th>
+                                <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class=" text-capitalize">image</th>
                                 {{-- <th scope="col" style="white-space: nowrap; text-align: center;"
                                     class=" text-capitalize">purpose used</th> --}}
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
@@ -140,24 +142,23 @@ consumable --}}
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class=" text-capitalize">
                                     {{ $item->description }}</th>
-                                {{-- <th scope="col" style="text-align: center;font-weight: 400!important;"
-                                    class=" text-capitalize">
-                                    {{ $item->purpose_used }}</th> --}}
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
-                                    class=" text-capitalize  ">
-                                    <Select class="form-select" name="item_id[{{ $item->id }}]">
-                                        <option value="ada">Ada</option>
-                                        <option value="return">Di Bawa Kembali</option>
-                                        @if ($item->is_consumable==1)
-                                            
-                                        <option value="hilang">Habis</option>
-                                        @else
-                                        <option value="hilang">Hilang</option>
-                                            
+                                    class=" text-capitalize">
+                                    @if($item->job_detail_picture)
+                                    <img src="{{ URL::To( $item->job_detail_picture) }}" alt="Product Image"
+                                        style="max-width: 100px; max-height: 100px;">
+                                    @else
+                                    <span class="text-muted">No image</span>
+                                    @endif
+                                </th>
+                                <th scope="col" style="text-align: center;font-weight: 400!important;"
+                                    class=" text-capitalize">
+                                    <div class="d-flex flex-column gap-2">
+                                        @if(!$item->job_detail_picture)
+                                        <input type="file" name="product_images[{{ $item->id }}]" accept="image/png"
+                                            class="form-control">
                                         @endif
-                                    </Select>
-                                    {{-- <input type="checkbox" name="item_id[]" value="{{ $item->id }}"
-                                        {{ $event!=null ? $event->id==$item->event_id ?'checked':'':'' }}> --}}
+                                    </div>
                                 </th>
                             </tr>
                             @endforeach

@@ -1,6 +1,6 @@
 @extends('layouts.index')
 @push('css')
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+
 <link rel="stylesheet" href="/resources/demos/style.css">
 
 @endpush
@@ -50,6 +50,14 @@ consumable --}}
                             <input type="text" class="form-control" id="type" name="type" placeholder="DUE800">
                             @endif
                         </div>
+                        <div class="mb-3">
+                            <label for="size" class="form-label text-capitalize">size</label>
+                            @if (!str_contains($data,'size'))
+                            <select id="size_search" class="cari form-control w-100" name="size"></select>
+                            @else
+                            <input type="text" class="form-control" id="size" name="size" placeholder="25M">
+                            @endif
+                        </div>
                         <button class="btn btn-primary text-capitalize mt-5 w-100" id="inputData" type="submit">
                             submit
                         </button>
@@ -61,9 +69,4 @@ consumable --}}
 </div>
 @endsection
 @push('script')
-<script>
-    $( function() {
-        $( "#date" ).datepicker();
-      } );
-</script>
 @endpush

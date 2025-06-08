@@ -1,6 +1,6 @@
 @extends('layouts.index')
 @push('css')
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+
 <link rel="stylesheet" href="/resources/demos/style.css">
 <style>
     .unauthorized-message {
@@ -17,7 +17,7 @@
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-12">
-            @if(!$isCloserTeamMember)
+            @if(!$isCloserTeamMember && !$isStarterTeamMember && Auth::user()->role != 'super_user' && Auth::user()->role != 'owner')
             <div class="unauthorized-message">
                 <h4>Unauthorized Access</h4>
                 <p>You are not authorized to close this event. Only members of the closer team can access this page.</p>
@@ -76,7 +76,7 @@
                 </div> --}}
                 <div class="mb-3">
                     <label for="client" class="form-label text-capitalize">client</label>
-                    <input readonly type="text" @if ($event) value="{{ $event->client }}" @endif
+                    <input readonly type="text" @if ($event) value="{{ $event->clientData->name }}" @endif
                         class="form-control @error('client') is-invalid @enderror" required id="client" name="client"
                         placeholder="PT. XYZ">
                     @error('client')
@@ -101,10 +101,10 @@
                                     class="text-capitalize">brand</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
                                     class="text-capitalize">type</th>
+                                {{-- <th scope="col" style="white-space: nowrap; text-align: center;"
+                                    class="text-capitalize">description</th> --}}
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class="text-capitalize">description</th>
-                                <th scope="col" style="white-space: nowrap; text-align: center;"
-                                    class="text-capitalize">price</th>
+                                    class="text-capitalize">image</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
                                     class="text-capitalize">status</th>
                                 <th scope="col" style="white-space: nowrap; text-align: center;"
@@ -136,12 +136,18 @@
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class="text-capitalize">
                                     {{ $item->type }}</th>
+                                {{-- <th scope="col" style="text-align: center;font-weight: 400!important;"
+                                    class="text-capitalize">
+                                    {{ $item->description }}</th> --}}
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class="text-capitalize">
-                                    {{ $item->description }}</th>
-                                <th scope="col" style="text-align: center;font-weight: 400!important;"
-                                    class="text-capitalize">
-                                    {{ number_format($item->price, 0, ',', '.') }}</th>
+                                    @if ($item->job_detail_picture!=null)
+                                    <img src="{{ URL::To( $item->job_detail_picture) }}"
+                                        style="width: 100px; height: 100px;" alt="Product Image" @else <span
+                                        class="badge bg-danger">No Image</span>
+                                    @endif
+                                </th>
+                                {{-- {{ number_format($item->price, 0, ',', '.') }}</th> --}}
                                 <th scope="col" style="text-align: center;font-weight: 400!important;"
                                     class="text-capitalize">
                                     @if($item->is_consumable == 1)
@@ -173,12 +179,15 @@
                 </form>
             </div>
         </div>
+        @endif
     </div>
-    @endsection
+</div>
+</div>
+@endsection
 
-    @push('script')
-    <script>
-        $(function() {
+@push('script')
+<script>
+    $(function() {
         $("#date").datepicker();
         
         // Form submission validation
@@ -199,5 +208,5 @@
             }
         });
     });
-    </script>
-    @endpush
+</script>
+@endpush
